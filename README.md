@@ -92,7 +92,7 @@ flutter test
 flutter build apk --debug
 ```
 
-La integración del Excel está cubierta por 79 pruebas unitarias y de interfaz, más las 12 pruebas de aceptación de `audit/`. La prueba nativa aislada de Android verifica catálogo, déficits combinados, análisis parcial, rotación e historial con datos en memoria:
+La integración del Excel está cubierta por 82 pruebas unitarias y de interfaz, más las 12 pruebas de aceptación de `audit/`. La prueba nativa aislada de Android verifica catálogo, déficits combinados, análisis parcial, rotación e historial con datos en memoria:
 
 ```sh
 flutter test audit/crop_recommendations_audit_test.dart
