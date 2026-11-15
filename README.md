@@ -15,9 +15,15 @@ La primera apertura muestra tres parcelas de ejemplo cerca de Lima. El mapa nece
 
 En Android o iOS, configura un token público de Mapbox para usar el mapa satelital como mapa principal:
 
+1. Copia `mapbox.defines.example.json` como `mapbox.defines.json`.
+2. Reemplaza el valor de `MAPBOX_ACCESS_TOKEN` por tu token público (`pk.`). El archivo local está excluido de Git.
+3. Ejecuta:
+
 ```sh
-flutter run --dart-define=MAPBOX_ACCESS_TOKEN=pk.TU_TOKEN
+flutter run --dart-define-from-file=mapbox.defines.json
 ```
+
+La configuración del proyecto habilita Swift Package Manager, requerido por Mapbox 3.35 en iOS. La app requiere iOS 15 o superior por sus dependencias de Firebase. Para instalarla en un iPhone físico, selecciona tu equipo de desarrollo en **Signing & Capabilities** de `ios/Runner.xcworkspace` y mantén activado el modo desarrollador del teléfono.
 
 Selecciona una parcela para ver sus vértices. Arrastra uno para cambiar su forma; al soltarlo, la nueva geometría se guarda junto con los demás datos de la parcela. El botón **Vista 2D/3D** cambia la inclinación sin reiniciar la posición del mapa. La creación, edición de nombre y cultivo, y eliminación siguen disponibles en la misma pantalla.
 
@@ -61,6 +67,14 @@ flutter analyze
 flutter test
 flutter build apk --debug
 ```
+
+Para probar Mapbox en un teléfono conectado y guardar capturas en `build/mapbox-device/`:
+
+```sh
+flutter drive --driver=test_driver/mapbox_device_driver.dart --target=integration_test/mapbox_device_test.dart --dart-define-from-file=mapbox.defines.json -d ID_DEL_DISPOSITIVO
+```
+
+La prueba abre la app, cambia entre 3D y 2D, comprueba el guardado local al recibir el final de un arrastre y vuelve al mapa desde Mis cultivos. Restaura la geometría original al terminar; el gesto físico de arrastrar se verifica manualmente.
 
 La estructura separa `data/` (modelos, estado y servicios), `app/` (tema y navegación) y `screens/` (módulos). Provider comparte el estado entre pantallas. Las animaciones de navegación, entrada escalonada, parcelas y controles usan widgets nativos de Flutter.
 

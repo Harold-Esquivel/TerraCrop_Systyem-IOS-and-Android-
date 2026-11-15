@@ -351,5 +351,8 @@ class _MapboxParcelMapState extends State<MapboxParcelMap> {
     viewport: _initialViewport,
     textureView: true,
     onMapCreated: _onMapCreated,
+    onMapLoadedListener: (_) => debugPrint('Mapa satelital Mapbox cargado'),
+    onMapLoadErrorListener: (event) =>
+        debugPrint('Error al cargar el mapa satelital: ${event.type}'),
   );
 }
