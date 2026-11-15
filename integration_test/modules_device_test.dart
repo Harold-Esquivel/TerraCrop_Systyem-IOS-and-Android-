@@ -67,15 +67,20 @@ void main() {
     await binding.takeScreenshot('06-smart-market');
     await tester.enterText(find.byKey(const Key('market-search')), 'SEN0193');
     FocusManager.instance.primaryFocus?.unfocus();
-    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpAndSettle();
     final add = find.byKey(const Key('market-add-sen0193'));
     await tester.scrollUntilVisible(
       add,
       150,
       scrollable: find.byType(Scrollable).first,
     );
+    await tester.pumpAndSettle();
+    // Keep the complete button above the bottom navigation after the native
+    // keyboard has changed the viewport dimensions.
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -180));
+    await tester.pumpAndSettle();
     await tester.tap(add);
-    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpAndSettle();
     // Switching modules must retain the cart and the scenario.
     await tester.tap(find.byKey(const Key('nav-tab-0')));
     await tester.pump(const Duration(milliseconds: 500));
@@ -84,6 +89,13 @@ void main() {
     await tester.tap(find.byKey(const Key('market-cart')));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('market-demo-checkout')),
+      100,
+      scrollable: find.byType(Scrollable).last,
+      maxScrolls: 10,
+    );
+    await tester.pumpAndSettle();
     expect(find.text('S/ 37'), findsWidgets);
     expect(find.byKey(const Key('market-demo-checkout')), findsOneWidget);
     await binding.takeScreenshot('07-smart-market-carrito');
