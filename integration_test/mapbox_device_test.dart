@@ -39,6 +39,9 @@ void main() {
     await tester.pump(const Duration(seconds: 15));
     expect(tester.takeException(), isNull);
     expect(find.byType(MapWidget), findsOneWidget);
+    // Android screenshots require an image surface; this is a no-op on iOS.
+    await binding.convertFlutterSurfaceToImage();
+    await tester.pump();
     await binding.takeScreenshot('mapbox-3d');
 
     await tester.tap(find.text('Vista 2D'));

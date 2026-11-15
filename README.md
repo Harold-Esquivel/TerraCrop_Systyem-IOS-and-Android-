@@ -68,7 +68,16 @@ flutter test
 flutter build apk --debug
 ```
 
-Para probar Mapbox en un teléfono conectado y guardar capturas en `build/mapbox-device/`:
+Para compilar con el mapa satelital y el token local configurado:
+
+```sh
+flutter build apk --debug --dart-define-from-file=mapbox.defines.json
+flutter build ios --debug --no-codesign --dart-define-from-file=mapbox.defines.json
+```
+
+El APK queda en `build/app/outputs/flutter-apk/app-debug.apk` y la app iOS en `build/ios/iphoneos/Runner.app`. La compilación iOS sin firma permite verificar el código; instalarla en un iPhone físico requiere una cuenta de Apple en Xcode, un equipo de desarrollo y un perfil de aprovisionamiento válido.
+
+Para probar Mapbox en un teléfono Android/iOS conectado o un simulador iOS y guardar capturas en `build/mapbox-device/`:
 
 ```sh
 flutter drive --driver=test_driver/mapbox_device_driver.dart --target=integration_test/mapbox_device_test.dart --dart-define-from-file=mapbox.defines.json -d ID_DEL_DISPOSITIVO
