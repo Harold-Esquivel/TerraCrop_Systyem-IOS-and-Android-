@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../app/app_theme.dart';
+import '../app/growing_loading_view.dart';
 import '../app/ui.dart';
 import '../data/crop_simulation.dart';
 import '../data/agronomy_catalog.dart';
@@ -22,6 +25,28 @@ class _SmartCycleScreenState extends State<SmartCycleScreen> {
   double intensity = .5;
   int days = 30;
   int daysToHarvest = 15;
+  bool showingResults = false;
+
+  Future<void> _showResults(Parcel parcel) async {
+    if (showingResults) return;
+    final input = SimulationInput(
+      parcel: parcel.copyWith(clearSoilAnalysis: true),
+      events: events,
+      intensity: intensity,
+      days: days,
+      daysToHarvest: daysToHarvest,
+    );
+    setState(() => showingResults = true);
+    try {
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute(
+          builder: (_) => SmartCycleResultsScreen(input: input),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => showingResults = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,17 +58,6 @@ class _SmartCycleScreenState extends State<SmartCycleScreen> {
     final reference = current == null
         ? null
         : AgronomyCatalog.current?.findCrop(current.crop);
-    final result = current == null
-        ? null
-        : CropSimulation.run(
-            SimulationInput(
-              parcel: current.copyWith(clearSoilAnalysis: true),
-              events: events,
-              intensity: intensity,
-              days: days,
-              daysToHarvest: daysToHarvest,
-            ),
-          );
     return Column(
       children: [
         const PageIntro(
@@ -73,7 +87,7 @@ class _SmartCycleScreenState extends State<SmartCycleScreen> {
                 ),
               ),
               const SizedBox(height: 18),
-              if (selected == null || current == null || result == null)
+              if (selected == null || current == null)
                 const SurfaceCard(
                   child: Text(
                     'Crea una parcela en MAPA para comenzar la simulación.',
@@ -247,142 +261,23 @@ class _SmartCycleScreenState extends State<SmartCycleScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
-                Text(
-                  '2. Compara los resultados',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Referencia: mismas condiciones iniciales, sin los eventos seleccionados.',
-                  style: TextStyle(fontSize: 12, color: muted),
-                ),
-                const SizedBox(height: 12),
-                _windowCard(result),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    _metric(
-                      'Condición final',
-                      '${result.finalHealth.toStringAsFixed(0)}/100',
-                      '${result.conditionDifference >= 0 ? '+' : ''}${result.conditionDifference.toStringAsFixed(1)} puntos vs. referencia',
-                      blue,
-                    ),
-                    _metric(
-                      'Merma potencial',
-                      '${result.finalLossPercent.toStringAsFixed(1)}%',
-                      '${result.lossDifference >= 0 ? '+' : ''}${result.lossDifference.toStringAsFixed(1)} puntos porcentuales',
-                      Colors.deepOrange,
-                    ),
-                    _metric(
-                      'Humedad media',
-                      '${result.averageMoisture.toStringAsFixed(1)}%',
-                      'Durante los $days días simulados',
-                      green,
-                    ),
-                    _metric(
-                      'Días extra simulados',
-                      '${result.additionalDaysInParcel}',
-                      'Después de la cosecha prevista',
-                      blue,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                SurfaceCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Evolución de la condición',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 5),
-                      const Text(
-                        'Índice del modelo: 100 es la mejor condición',
-                        style: TextStyle(fontSize: 11, color: muted),
-                      ),
-                      const SizedBox(height: 14),
-                      Semantics(
-                        label:
-                            'Condición del cultivo: escenario ${result.finalHealth.round()} de 100; referencia ${result.baselineFinalHealth.round()} de 100 al día $days.',
-                        child: SizedBox(
-                          height: 190,
-                          width: double.infinity,
-                          child: CustomPaint(
-                            painter: _CycleChart(
-                              result.points,
-                              result.basePoints,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Día 0',
-                            style: TextStyle(fontSize: 11, color: muted),
-                          ),
-                          Text(
-                            'Día $days',
-                            style: const TextStyle(fontSize: 11, color: muted),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      const Wrap(
-                        spacing: 16,
-                        runSpacing: 8,
-                        children: [
-                          _Legend(color: blue, text: 'Escenario'),
-                          _Legend(color: green, text: 'Referencia'),
-                          _Legend(
-                            color: Colors.deepOrange,
-                            text: 'Umbral de condición 60',
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 14),
-                _dailyTable(result),
-                const SizedBox(height: 14),
-                SurfaceCard(
-                  child: ExpansionTile(
-                    key: const PageStorageKey('cycle-calculation-notes'),
-                    tilePadding: EdgeInsets.zero,
-                    title: const Text('Cómo se calcula'),
-                    children: [
-                      const Text(
-                        CropSimulation.methodology,
-                        style: TextStyle(fontSize: 12, height: 1.5),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        result.summary,
-                        style: const TextStyle(fontSize: 12, height: 1.5),
-                      ),
-                      const SizedBox(height: 10),
-                      const Text(
-                        'Merma potencial es un indicador ficticio del escenario, no una predicción de producción. La ausencia de un umbral en el horizonte simulado no garantiza que el cultivo pueda permanecer ese tiempo en la parcela.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: muted,
-                          height: 1.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ],
             ],
           ),
         ),
+        if (current != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(22, 12, 22, 14),
+            child: SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                key: const Key('cycle-show-results'),
+                onPressed: showingResults ? null : () => _showResults(current),
+                icon: const Icon(Icons.analytics_outlined),
+                label: const Text('Ver el resultado'),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -483,6 +378,288 @@ class _SmartCycleScreenState extends State<SmartCycleScreen> {
       ],
     ),
   );
+}
+
+/// One immutable scenario, captured when the user requests its result.
+class SmartCycleResultsScreen extends StatefulWidget {
+  const SmartCycleResultsScreen({super.key, required this.input});
+  final SimulationInput input;
+
+  @override
+  State<SmartCycleResultsScreen> createState() =>
+      _SmartCycleResultsScreenState();
+}
+
+class _SmartCycleResultsScreenState extends State<SmartCycleResultsScreen>
+    with SingleTickerProviderStateMixin {
+  static const loadingDuration = Duration(seconds: 3);
+  late final AnimationController growth = AnimationController(
+    vsync: this,
+    duration: loadingDuration,
+  );
+  Timer? finishTimer;
+  SimulationResult? result;
+  Object? error;
+  int get days => widget.input.days;
+  int get daysToHarvest => widget.input.daysToHarvest;
+
+  @override
+  void initState() {
+    super.initState();
+    growth.forward();
+    finishTimer = Timer(loadingDuration, () {
+      if (!mounted) return;
+      try {
+        final next = CropSimulation.run(widget.input);
+        setState(() => result = next);
+      } catch (failure) {
+        setState(() => error = failure);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    finishTimer?.cancel();
+    growth.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final result = this.result;
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          result == null && error == null
+              ? 'Generando resultado'
+              : 'Resultado de Smart-Cycle',
+        ),
+      ),
+      body: result == null && error == null
+          ? AnimatedBuilder(
+              animation: growth,
+              builder: (context, _) => GrowingLoadingView(
+                key: const Key('cycle-loading'),
+                progress: growth.value,
+                messages: const [
+                  'Preparando tu simulación...',
+                  'Analizando los eventos elegidos...',
+                  'Comparando la evolución de tu cultivo...',
+                  'Tu resultado está listo.',
+                ],
+                subtitle: 'Generando el resultado de Smart-Cycle',
+              ),
+            )
+          : error != null || result == null
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'No se pudo generar la simulación. Revisa las condiciones e inténtalo de nuevo.',
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Volver al escenario'),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : SafeArea(
+              top: false,
+              child: ListView(
+                key: const PageStorageKey('cycle-results-scroll'),
+                padding: const EdgeInsets.fromLTRB(22, 12, 22, 25),
+                children: [
+                  SurfaceCard(
+                    color: paleBlue,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${widget.input.parcel.name} · ${widget.input.parcel.crop}',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          widget.input.events.isEmpty
+                              ? 'Sin eventos adicionales'
+                              : widget.input.events
+                                    .map((event) => event.label)
+                                    .join(' · '),
+                          key: const Key('cycle-result-events'),
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Intensidad: ${(widget.input.intensity * 100).round()}% · Horizonte: $days días · Cosecha prevista: día $daysToHarvest',
+                          key: const Key('cycle-result-settings'),
+                          style: const TextStyle(fontSize: 12, height: 1.5),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Estimación de demostración; no garantiza un plazo seguro de cosecha.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: muted,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    '2. Compara los resultados',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Referencia: mismas condiciones iniciales, sin los eventos seleccionados.',
+                    style: TextStyle(fontSize: 12, color: muted),
+                  ),
+                  const SizedBox(height: 12),
+                  _windowCard(result),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      _metric(
+                        'Condición final',
+                        '${result.finalHealth.toStringAsFixed(0)}/100',
+                        '${result.conditionDifference >= 0 ? '+' : ''}${result.conditionDifference.toStringAsFixed(1)} puntos vs. referencia',
+                        blue,
+                      ),
+                      _metric(
+                        'Merma potencial',
+                        '${result.finalLossPercent.toStringAsFixed(1)}%',
+                        '${result.lossDifference >= 0 ? '+' : ''}${result.lossDifference.toStringAsFixed(1)} puntos porcentuales',
+                        Colors.deepOrange,
+                      ),
+                      _metric(
+                        'Humedad media',
+                        '${result.averageMoisture.toStringAsFixed(1)}%',
+                        'Durante los $days días simulados',
+                        green,
+                      ),
+                      _metric(
+                        'Días extra simulados',
+                        '${result.additionalDaysInParcel}',
+                        'Después de la cosecha prevista',
+                        blue,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  SurfaceCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Evolución de la condición',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 5),
+                        const Text(
+                          'Índice del modelo: 100 es la mejor condición',
+                          style: TextStyle(fontSize: 11, color: muted),
+                        ),
+                        const SizedBox(height: 14),
+                        Semantics(
+                          label:
+                              'Condición del cultivo: escenario ${result.finalHealth.round()} de 100; referencia ${result.baselineFinalHealth.round()} de 100 al día $days.',
+                          child: SizedBox(
+                            height: 190,
+                            width: double.infinity,
+                            child: CustomPaint(
+                              painter: _CycleChart(
+                                result.points,
+                                result.basePoints,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Día 0',
+                              style: TextStyle(fontSize: 11, color: muted),
+                            ),
+                            Text(
+                              'Día $days',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: muted,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        const Wrap(
+                          spacing: 16,
+                          runSpacing: 8,
+                          children: [
+                            _Legend(color: blue, text: 'Escenario'),
+                            _Legend(color: green, text: 'Referencia'),
+                            _Legend(
+                              color: Colors.deepOrange,
+                              text: 'Umbral de condición 60',
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  _dailyTable(result),
+                  const SizedBox(height: 14),
+                  SurfaceCard(
+                    child: ExpansionTile(
+                      key: const PageStorageKey('cycle-calculation-notes'),
+                      tilePadding: EdgeInsets.zero,
+                      title: const Text('Cómo se calcula'),
+                      children: [
+                        const Text(
+                          CropSimulation.methodology,
+                          style: TextStyle(fontSize: 12, height: 1.5),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          result.summary,
+                          style: const TextStyle(fontSize: 12, height: 1.5),
+                        ),
+                        const SizedBox(height: 10),
+                        const Text(
+                          'Merma potencial es un indicador ficticio del escenario, no una predicción de producción. La ausencia de un umbral en el horizonte simulado no garantiza que el cultivo pueda permanecer ese tiempo en la parcela.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: muted,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 18),
+                  OutlinedButton.icon(
+                    key: const Key('cycle-edit-scenario'),
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.tune),
+                    label: const Text('Cambiar escenario'),
+                  ),
+                ],
+              ),
+            ),
+    );
+  }
 
   Widget _windowCard(SimulationResult result) {
     final riskDay = result.firstRiskDay;

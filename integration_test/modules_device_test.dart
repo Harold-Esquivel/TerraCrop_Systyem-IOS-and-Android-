@@ -45,6 +45,13 @@ void main() {
     await tester.tap(find.byKey(const Key('nav-tab-1')));
     await tester.pump(const Duration(seconds: 1));
     await binding.takeScreenshot('03-smart-cycle-eventos');
+    await tester.tap(find.byKey(const Key('cycle-show-results')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.byKey(const Key('cycle-loading')), findsOneWidget);
+    await binding.takeScreenshot('03b-smart-cycle-cargando');
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pump(const Duration(milliseconds: 400));
     await tester.scrollUntilVisible(
       find.byKey(const Key('cycle-window-result')),
       220,
@@ -61,6 +68,8 @@ void main() {
     );
     await tester.pump(const Duration(milliseconds: 500));
     await binding.takeScreenshot('05-smart-cycle-grafica');
+    await tester.pageBack();
+    await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('nav-tab-3')));
     await tester.pump(const Duration(seconds: 1));

@@ -157,9 +157,13 @@ void main() {
     await tester.pumpWidget(shellWith(store));
     await tester.tap(find.byKey(const Key('nav-tab-1')));
     await tester.pump(const Duration(milliseconds: 500));
+    await tester.tap(find.byKey(const Key('cycle-show-results')));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pump(const Duration(milliseconds: 400));
     final scrollable = find
         .descendant(
-          of: find.byType(SmartCycleScreen),
+          of: find.byType(SmartCycleResultsScreen),
           matching: find.byType(Scrollable),
         )
         .first;
