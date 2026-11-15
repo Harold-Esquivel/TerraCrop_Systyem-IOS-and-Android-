@@ -70,12 +70,12 @@ class _SmartCycleScreenState extends State<SmartCycleScreen> {
             key: const PageStorageKey('smart-cycle-scroll'),
             padding: const EdgeInsets.fromLTRB(22, 0, 22, 25),
             children: [
-              const SurfaceCard(
-                color: paleBlue,
+              SurfaceCard(
+                color: context.colors.softBlue,
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.science_outlined, color: blue),
+                    Icon(Icons.science_outlined, color: context.colors.blue),
                     SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -153,9 +153,12 @@ class _SmartCycleScreenState extends State<SmartCycleScreen> {
                       const SizedBox(height: 8),
                       _eventChips(climate: false),
                       const SizedBox(height: 12),
-                      const Text(
+                      Text(
                         'Puedes combinar eventos. Se aplican cada día con una intensidad constante.',
-                        style: TextStyle(color: muted, fontSize: 12),
+                        style: TextStyle(
+                          color: context.colors.muted,
+                          fontSize: 12,
+                        ),
                       ),
                       _control(
                         'Intensidad de los eventos',
@@ -184,9 +187,12 @@ class _SmartCycleScreenState extends State<SmartCycleScreen> {
                         (v) => setState(() => daysToHarvest = v.round()),
                         key: 'cycle-harvest',
                       ),
-                      const Text(
+                      Text(
                         'Este plazo lo defines tú: usa 0 si el cultivo ya está listo para cosechar.',
-                        style: TextStyle(color: muted, fontSize: 12),
+                        style: TextStyle(
+                          color: context.colors.muted,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -308,7 +314,11 @@ class _SmartCycleScreenState extends State<SmartCycleScreen> {
         const SizedBox(height: 8),
         Text(
           profile.validation,
-          style: const TextStyle(fontSize: 11, color: muted, height: 1.5),
+          style: TextStyle(
+            fontSize: 11,
+            color: context.colors.muted,
+            height: 1.5,
+          ),
         ),
       ],
     ),
@@ -359,7 +369,10 @@ class _SmartCycleScreenState extends State<SmartCycleScreen> {
             ),
             Text(
               value,
-              style: const TextStyle(fontWeight: FontWeight.w800, color: blue),
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                color: context.colors.blue,
+              ),
             ),
           ],
         ),
@@ -476,7 +489,7 @@ class _SmartCycleResultsScreenState extends State<SmartCycleResultsScreen>
                 padding: const EdgeInsets.fromLTRB(22, 12, 22, 25),
                 children: [
                   SurfaceCard(
-                    color: paleBlue,
+                    color: context.colors.softBlue,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -501,11 +514,11 @@ class _SmartCycleResultsScreenState extends State<SmartCycleResultsScreen>
                           style: const TextStyle(fontSize: 12, height: 1.5),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
+                        Text(
                           'Estimación de demostración; no garantiza un plazo seguro de cosecha.',
                           style: TextStyle(
                             fontSize: 12,
-                            color: muted,
+                            color: context.colors.muted,
                             height: 1.5,
                           ),
                         ),
@@ -518,9 +531,9 @@ class _SmartCycleResultsScreenState extends State<SmartCycleResultsScreen>
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 6),
-                  const Text(
+                  Text(
                     'Referencia: mismas condiciones iniciales, sin los eventos seleccionados.',
-                    style: TextStyle(fontSize: 12, color: muted),
+                    style: TextStyle(fontSize: 12, color: context.colors.muted),
                   ),
                   const SizedBox(height: 12),
                   _windowCard(result),
@@ -533,7 +546,7 @@ class _SmartCycleResultsScreenState extends State<SmartCycleResultsScreen>
                         'Condición final',
                         '${result.finalHealth.toStringAsFixed(0)}/100',
                         '${result.conditionDifference >= 0 ? '+' : ''}${result.conditionDifference.toStringAsFixed(1)} puntos vs. referencia',
-                        blue,
+                        context.colors.blue,
                       ),
                       _metric(
                         'Merma potencial',
@@ -545,13 +558,13 @@ class _SmartCycleResultsScreenState extends State<SmartCycleResultsScreen>
                         'Humedad media',
                         '${result.averageMoisture.toStringAsFixed(1)}%',
                         'Durante los $days días simulados',
-                        green,
+                        context.colors.green,
                       ),
                       _metric(
                         'Días extra simulados',
                         '${result.additionalDaysInParcel}',
                         'Después de la cosecha prevista',
-                        blue,
+                        context.colors.blue,
                       ),
                     ],
                   ),
@@ -565,9 +578,12 @@ class _SmartCycleResultsScreenState extends State<SmartCycleResultsScreen>
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(height: 5),
-                        const Text(
+                        Text(
                           'Índice del modelo: 100 es la mejor condición',
-                          style: TextStyle(fontSize: 11, color: muted),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: context.colors.muted,
+                          ),
                         ),
                         const SizedBox(height: 14),
                         Semantics(
@@ -580,6 +596,7 @@ class _SmartCycleResultsScreenState extends State<SmartCycleResultsScreen>
                               painter: _CycleChart(
                                 result.points,
                                 result.basePoints,
+                                context.colors,
                               ),
                             ),
                           ),
@@ -588,26 +605,35 @@ class _SmartCycleResultsScreenState extends State<SmartCycleResultsScreen>
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
+                            Text(
                               'Día 0',
-                              style: TextStyle(fontSize: 11, color: muted),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: context.colors.muted,
+                              ),
                             ),
                             Text(
                               'Día $days',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
-                                color: muted,
+                                color: context.colors.muted,
                               ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 12),
-                        const Wrap(
+                        Wrap(
                           spacing: 16,
                           runSpacing: 8,
                           children: [
-                            _Legend(color: blue, text: 'Escenario'),
-                            _Legend(color: green, text: 'Referencia'),
+                            _Legend(
+                              color: context.colors.blue,
+                              text: 'Escenario',
+                            ),
+                            _Legend(
+                              color: context.colors.green,
+                              text: 'Referencia',
+                            ),
                             _Legend(
                               color: Colors.deepOrange,
                               text: 'Umbral de condición 60',
@@ -636,11 +662,11 @@ class _SmartCycleResultsScreenState extends State<SmartCycleResultsScreen>
                           style: const TextStyle(fontSize: 12, height: 1.5),
                         ),
                         const SizedBox(height: 10),
-                        const Text(
+                        Text(
                           'Merma potencial es un indicador ficticio del escenario, no una predicción de producción. La ausencia de un umbral en el horizonte simulado no garantiza que el cultivo pueda permanecer ese tiempo en la parcela.',
                           style: TextStyle(
                             fontSize: 12,
-                            color: muted,
+                            color: context.colors.muted,
                             height: 1.5,
                           ),
                         ),
@@ -682,7 +708,9 @@ class _SmartCycleResultsScreenState extends State<SmartCycleResultsScreen>
           'No se alcanza el umbral en $days días, incluidos ${result.additionalDaysInParcel} después de la cosecha prevista. No se estima el comportamiento fuera de este horizonte.';
     }
     return SurfaceCard(
-      color: riskDay == null ? paleBlue : const Color(0xFFFFF2E9),
+      color: riskDay == null
+          ? context.colors.softBlue
+          : context.colors.warningSurface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -697,9 +725,13 @@ class _SmartCycleResultsScreenState extends State<SmartCycleResultsScreen>
             style: const TextStyle(fontSize: 13, height: 1.5),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Umbral: condición menor de 60/100 o merma potencial de al menos 15%. Es un criterio de demostración, no un plazo seguro.',
-            style: TextStyle(fontSize: 11, color: muted, height: 1.4),
+            style: TextStyle(
+              fontSize: 11,
+              color: context.colors.muted,
+              height: 1.4,
+            ),
           ),
         ],
       ),
@@ -716,7 +748,10 @@ class _SmartCycleResultsScreenState extends State<SmartCycleResultsScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 12, color: muted)),
+                Text(
+                  title,
+                  style: TextStyle(fontSize: 12, color: context.colors.muted),
+                ),
                 const SizedBox(height: 8),
                 Text(
                   value,
@@ -806,7 +841,8 @@ class _Legend extends StatelessWidget {
 }
 
 class _CycleChart extends CustomPainter {
-  const _CycleChart(this.scenario, this.reference);
+  const _CycleChart(this.scenario, this.reference, this.colors);
+  final AppColors colors;
   final List<SimulationPoint> scenario;
   final List<SimulationPoint> reference;
 
@@ -814,7 +850,7 @@ class _CycleChart extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final area = Rect.fromLTWH(30, 8, size.width - 36, size.height - 18);
     final grid = Paint()
-      ..color = border
+      ..color = colors.border
       ..strokeWidth = 1;
     for (final tick in [0, 20, 40, 60, 80, 100]) {
       final y = area.bottom - area.height * tick / 100;
@@ -822,7 +858,7 @@ class _CycleChart extends CustomPainter {
       final text = TextPainter(
         text: TextSpan(
           text: '$tick',
-          style: const TextStyle(color: muted, fontSize: 10),
+          style: TextStyle(color: colors.muted, fontSize: 10),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
@@ -860,11 +896,13 @@ class _CycleChart extends CustomPainter {
       );
     }
 
-    line(reference, green);
-    line(scenario, blue);
+    line(reference, colors.green);
+    line(scenario, colors.blue);
   }
 
   @override
   bool shouldRepaint(covariant _CycleChart oldDelegate) =>
-      oldDelegate.scenario != scenario || oldDelegate.reference != reference;
+      oldDelegate.colors != colors ||
+      oldDelegate.scenario != scenario ||
+      oldDelegate.reference != reference;
 }

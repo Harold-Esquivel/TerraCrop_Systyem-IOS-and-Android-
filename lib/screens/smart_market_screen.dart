@@ -52,7 +52,10 @@ class _SmartMarketScreenState extends State<SmartMarketScreen> {
             icon: Badge(
               isLabelVisible: !_cart.isEmpty,
               label: Text('${_cart.itemCount}'),
-              child: const Icon(Icons.shopping_bag_outlined, color: blue),
+              child: Icon(
+                Icons.shopping_bag_outlined,
+                color: context.colors.blue,
+              ),
             ),
           ),
         ),
@@ -60,12 +63,16 @@ class _SmartMarketScreenState extends State<SmartMarketScreen> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(22, 0, 22, 25),
             children: [
-              const SurfaceCard(
-                color: paleBlue,
+              SurfaceCard(
+                color: context.colors.softBlue,
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.storefront_outlined, color: blue, size: 27),
+                    Icon(
+                      Icons.storefront_outlined,
+                      color: context.colors.blue,
+                      size: 27,
+                    ),
                     SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -120,9 +127,13 @@ class _SmartMarketScreenState extends State<SmartMarketScreen> {
                 _productCard(product),
                 const SizedBox(height: 14),
               ],
-              const Text(
+              Text(
                 'Fuente: Resumen de Sensores Agrícolas. Los precios no incluyen costos de importación o envío. Soles y dólares se muestran por separado.',
-                style: TextStyle(color: muted, fontSize: 11, height: 1.5),
+                style: TextStyle(
+                  color: context.colors.muted,
+                  fontSize: 11,
+                  height: 1.5,
+                ),
               ),
             ],
           ),
@@ -161,10 +172,14 @@ class _SmartMarketScreenState extends State<SmartMarketScreen> {
               width: 54,
               height: 60,
               decoration: BoxDecoration(
-                color: paleBlue,
+                color: context.colors.softBlue,
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Icon(_productIcon(product), color: blue, size: 29),
+              child: Icon(
+                _productIcon(product),
+                color: context.colors.blue,
+                size: 29,
+              ),
             ),
             const SizedBox(width: 13),
             Expanded(
@@ -178,7 +193,7 @@ class _SmartMarketScreenState extends State<SmartMarketScreen> {
                   const SizedBox(height: 4),
                   Text(
                     product.subtitle,
-                    style: const TextStyle(fontSize: 12, color: muted),
+                    style: TextStyle(fontSize: 12, color: context.colors.muted),
                   ),
                 ],
               ),
@@ -199,12 +214,12 @@ class _SmartMarketScreenState extends State<SmartMarketScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                 decoration: BoxDecoration(
-                  color: canvas,
+                  color: context.colors.canvas,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   variable.label,
-                  style: const TextStyle(fontSize: 10, color: muted),
+                  style: TextStyle(fontSize: 10, color: context.colors.muted),
                 ),
               ),
           ],
@@ -212,15 +227,15 @@ class _SmartMarketScreenState extends State<SmartMarketScreen> {
         const SizedBox(height: 14),
         Text(
           product.priceLabel,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 25,
             fontWeight: FontWeight.w800,
-            color: blue,
+            color: context.colors.blue,
           ),
         ),
         Text(
           product.imported ? 'Referencia de importación' : 'Referencia en Perú',
-          style: const TextStyle(color: muted, fontSize: 11),
+          style: TextStyle(color: context.colors.muted, fontSize: 11),
         ),
         if (product.unavailableLocalPriceMinor case final int localPrice) ...[
           const SizedBox(height: 6),
@@ -265,14 +280,17 @@ class _SmartMarketScreenState extends State<SmartMarketScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
           children: [
-            Icon(_productIcon(product), size: 58, color: blue),
+            Icon(_productIcon(product), size: 58, color: context.colors.blue),
             const SizedBox(height: 15),
             Text(
               product.name,
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 6),
-            Text(product.subtitle, style: const TextStyle(color: muted)),
+            Text(
+              product.subtitle,
+              style: TextStyle(color: context.colors.muted),
+            ),
             const SizedBox(height: 20),
             Text(product.description, style: const TextStyle(height: 1.6)),
             const SizedBox(height: 20),
@@ -282,16 +300,20 @@ class _SmartMarketScreenState extends State<SmartMarketScreen> {
             const SizedBox(height: 8),
             Text(
               product.priceLabel,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 28,
-                color: blue,
+                color: context.colors.blue,
                 fontWeight: FontWeight.w800,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Oferta ficticia. No se verifica stock en tiempo real ni se realizan cobros o envíos.',
-              style: TextStyle(color: muted, fontSize: 12, height: 1.5),
+              style: TextStyle(
+                color: context.colors.muted,
+                fontSize: 12,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 20),
             FilledButton.icon(
@@ -343,9 +365,13 @@ class _SmartMarketScreenState extends State<SmartMarketScreen> {
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Pedido ficticio · No se realizarán cobros ni envíos.',
-                  style: TextStyle(color: muted, fontSize: 12, height: 1.5),
+                  style: TextStyle(
+                    color: context.colors.muted,
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(height: 20),
                 if (_cart.isEmpty)
@@ -365,9 +391,12 @@ class _SmartMarketScreenState extends State<SmartMarketScreen> {
                             style: const TextStyle(fontWeight: FontWeight.w800),
                           ),
                           if (product.imported)
-                            const Text(
+                            Text(
                               'Importación · demo',
-                              style: TextStyle(color: muted, fontSize: 11),
+                              style: TextStyle(
+                                color: context.colors.muted,
+                                fontSize: 11,
+                              ),
                             ),
                           const SizedBox(height: 8),
                           Text('${product.priceLabel} por unidad'),
@@ -422,16 +451,20 @@ class _SmartMarketScreenState extends State<SmartMarketScreen> {
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Text(
                         entry.key.format(entry.value),
-                        style: const TextStyle(
-                          color: blue,
+                        style: TextStyle(
+                          color: context.colors.blue,
                           fontSize: 23,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                     ),
-                  const Text(
+                  Text(
                     'Monedas separadas, sin conversión. Importación y envío no incluidos.',
-                    style: TextStyle(color: muted, fontSize: 11, height: 1.5),
+                    style: TextStyle(
+                      color: context.colors.muted,
+                      fontSize: 11,
+                      height: 1.5,
+                    ),
                   ),
                   const SizedBox(height: 20),
                   FilledButton.icon(

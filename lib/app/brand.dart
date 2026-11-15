@@ -50,7 +50,11 @@ class BrandBackdrop extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Colors.white, canvas, const Color(0xFFF0F7FF)],
+              colors: [
+                context.colors.surface,
+                context.colors.canvas,
+                context.colors.softBlue,
+              ],
             ),
           ),
         ),
@@ -58,12 +62,12 @@ class BrandBackdrop extends StatelessWidget {
       Positioned(
         top: -105,
         right: -105,
-        child: _Glow(size: 290, color: paleBlue),
+        child: _Glow(size: 290, color: context.colors.softBlue),
       ),
       Positioned(
         bottom: -120,
         left: -100,
-        child: _Glow(size: 270, color: const Color(0xFFE7F6EC)),
+        child: _Glow(size: 270, color: context.colors.softGreen),
       ),
       Positioned.fill(child: child),
     ],

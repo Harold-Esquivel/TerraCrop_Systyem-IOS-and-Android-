@@ -8,17 +8,17 @@ class SurfaceCard extends StatelessWidget {
     super.key,
     required this.child,
     this.padding = const EdgeInsets.all(18),
-    this.color = Colors.white,
+    this.color,
     this.onTap,
   });
   final Widget child;
   final EdgeInsets padding;
-  final Color color;
+  final Color? color;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) => Material(
-    color: color,
+    color: color ?? context.colors.surface,
     borderRadius: BorderRadius.circular(22),
     child: InkWell(
       onTap: onTap,
@@ -27,7 +27,7 @@ class SurfaceCard extends StatelessWidget {
         padding: padding,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: border),
+          border: Border.all(color: context.colors.border),
           boxShadow: const [
             BoxShadow(
               color: Color(0x0B24446A),
@@ -100,21 +100,36 @@ class PageIntro extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                eyebrow.toUpperCase(),
-                style: const TextStyle(
-                  color: blue,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.7,
-                ),
+              Row(
+                children: [
+                  Container(
+                    width: 18,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: context.colors.green,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      eyebrow.toUpperCase(),
+                      style: TextStyle(
+                        color: context.colors.blue,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.7,
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 7),
               Text(title, style: Theme.of(context).textTheme.headlineLarge),
               const SizedBox(height: 5),
               Text(
                 subtitle,
-                style: const TextStyle(color: muted, fontSize: 13),
+                style: TextStyle(color: context.colors.muted, fontSize: 13),
               ),
             ],
           ),
@@ -136,28 +151,35 @@ class MetricPill extends StatelessWidget {
   final String label;
   final Color color;
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-    decoration: BoxDecoration(
-      color: color.withValues(alpha: .1),
-      borderRadius: BorderRadius.circular(10),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: color),
-        const SizedBox(width: 5),
-        Text(
-          label,
-          style: TextStyle(
-            color: color,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
+  Widget build(BuildContext context) {
+    final tint = color == green
+        ? context.colors.green
+        : color == blue
+        ? context.colors.blue
+        : color;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: tint.withValues(alpha: .1),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: tint),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              color: tint,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
           ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }
 
 class PressButton extends StatefulWidget {
@@ -193,9 +215,11 @@ class _PressButtonState extends State<PressButton> {
         height: 49,
         padding: const EdgeInsets.symmetric(horizontal: 17),
         decoration: BoxDecoration(
-          color: widget.outlined ? Colors.white : blue,
+          color: widget.outlined ? context.colors.surface : blue,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: widget.outlined ? border : blue),
+          border: Border.all(
+            color: widget.outlined ? context.colors.border : blue,
+          ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -205,14 +229,14 @@ class _PressButtonState extends State<PressButton> {
               Icon(
                 widget.icon,
                 size: 18,
-                color: widget.outlined ? ink : Colors.white,
+                color: widget.outlined ? context.colors.ink : Colors.white,
               ),
               const SizedBox(width: 7),
             ],
             Text(
               widget.label,
               style: TextStyle(
-                color: widget.outlined ? ink : Colors.white,
+                color: widget.outlined ? context.colors.ink : Colors.white,
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
               ),

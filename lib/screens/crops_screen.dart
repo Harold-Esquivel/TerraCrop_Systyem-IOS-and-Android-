@@ -71,7 +71,7 @@ class _CropsScreenState extends State<CropsScreen> {
                   padding: const EdgeInsets.all(19),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF2671E8), Color(0xFF4B98FF)],
+                      colors: [Color(0xFF1769D2), Color(0xFF127A5A)],
                     ),
                     borderRadius: BorderRadius.circular(23),
                   ),
@@ -121,8 +121,8 @@ class _CropsScreenState extends State<CropsScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                const SurfaceCard(
-                  color: paleBlue,
+                SurfaceCard(
+                  color: context.colors.softBlue,
                   child: Text(
                     'Base del Excel para La Joya, Arequipa. Las referencias de demanda y las opciones de rotación requieren validación local; no son una receta de fertilización.',
                     style: TextStyle(fontSize: 12, height: 1.5),
@@ -256,7 +256,9 @@ class _CropCardState extends State<_CropCard> {
       RecommendationSeverity.critical => const Color(0xFFE57D45),
       RecommendationSeverity.warning => const Color(0xFFAD7A20),
       RecommendationSeverity.info =>
-        assessment.missingData.isEmpty ? green : muted,
+        assessment.missingData.isEmpty
+            ? context.colors.green
+            : context.colors.muted,
     };
     final analysis = p.soilAnalysis;
     return SurfaceCard(
@@ -266,7 +268,7 @@ class _CropCardState extends State<_CropCard> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.eco_rounded, color: green, size: 28),
+              Icon(Icons.eco_rounded, color: context.colors.green, size: 28),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -279,7 +281,10 @@ class _CropCardState extends State<_CropCard> {
                     const SizedBox(height: 3),
                     Text(
                       'Cultivo de ${p.crop}',
-                      style: const TextStyle(color: muted, fontSize: 12),
+                      style: TextStyle(
+                        color: context.colors.muted,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
@@ -296,10 +301,10 @@ class _CropCardState extends State<_CropCard> {
                 assessment.isDemo
                     ? 'Datos de demostración'
                     : 'Análisis ingresado',
-                blue,
+                context.colors.blue,
               ),
               if (assessment.profile case final profile?)
-                _tag(profile.classification, muted),
+                _tag(profile.classification, context.colors.muted),
             ],
           ),
           const SizedBox(height: 13),
@@ -353,7 +358,11 @@ class _CropCardState extends State<_CropCard> {
             assessment.isDemo
                 ? 'Los índices de N/P/K son simulados; no son una lectura de laboratorio ni se convierten a kg/ha.'
                 : 'Datos transcritos por el usuario. Los campos sin dato se mantienen desconocidos.',
-            style: const TextStyle(fontSize: 11, color: muted, height: 1.4),
+            style: TextStyle(
+              fontSize: 11,
+              color: context.colors.muted,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: 12),
           Wrap(
@@ -423,7 +432,7 @@ class _CropCardState extends State<_CropCard> {
             ),
           ),
           if (expanded) ...[
-            const Divider(color: border),
+            Divider(color: context.colors.border),
             Text(
               'Diagnóstico y acciones',
               style: Theme.of(context).textTheme.titleMedium,
@@ -442,9 +451,9 @@ class _CropCardState extends State<_CropCard> {
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   note,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
-                    color: muted,
+                    color: context.colors.muted,
                     height: 1.4,
                   ),
                 ),
@@ -462,9 +471,13 @@ class _CropCardState extends State<_CropCard> {
               style: const TextStyle(fontSize: 12, height: 1.5),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Compatibilidad del Excel, condicionada al análisis de suelo, clima y validación local. No se aplica ningún cambio automáticamente.',
-              style: TextStyle(fontSize: 11, color: muted, height: 1.5),
+              style: TextStyle(
+                fontSize: 11,
+                color: context.colors.muted,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 10),
             if (assessment.rotations.isEmpty)
@@ -509,7 +522,7 @@ class _CropCardState extends State<_CropCard> {
       width: double.infinity,
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: canvas,
+        color: context.colors.canvas,
         borderRadius: BorderRadius.circular(13),
       ),
       child: Column(
@@ -543,7 +556,7 @@ class _CropCardState extends State<_CropCard> {
               padding: const EdgeInsets.only(top: 6),
               child: Text(
                 'Regla del Excel: ${issue.sourceRuleId}${issue.isDemo ? ' · activada por un índice demo' : ''}',
-                style: const TextStyle(fontSize: 10, color: muted),
+                style: TextStyle(fontSize: 10, color: context.colors.muted),
               ),
             ),
           for (final id in issue.microorganismIds) _microorganism(id, issue.id),
@@ -574,7 +587,7 @@ class _CropCardState extends State<_CropCard> {
     margin: const EdgeInsets.only(bottom: 11),
     padding: const EdgeInsets.all(13),
     decoration: BoxDecoration(
-      border: Border.all(color: border),
+      border: Border.all(color: context.colors.border),
       borderRadius: BorderRadius.circular(14),
     ),
     child: Column(
@@ -589,8 +602,11 @@ class _CropCardState extends State<_CropCard> {
           spacing: 6,
           runSpacing: 6,
           children: [
-            _tag('${candidate.score}/3 · ${candidate.level}', green),
-            _tag(candidate.crop.family, blue),
+            _tag(
+              '${candidate.score}/3 · ${candidate.level}',
+              context.colors.green,
+            ),
+            _tag(candidate.crop.family, context.colors.blue),
             if (candidate.isPotential)
               _tag('Presencia local por confirmar', const Color(0xFF9F6225)),
           ],
@@ -603,7 +619,11 @@ class _CropCardState extends State<_CropCard> {
             padding: const EdgeInsets.only(top: 5),
             child: Text(
               condition,
-              style: const TextStyle(fontSize: 11, color: muted, height: 1.4),
+              style: TextStyle(
+                fontSize: 11,
+                color: context.colors.muted,
+                height: 1.4,
+              ),
             ),
           ),
         const SizedBox(height: 7),
@@ -650,18 +670,26 @@ class _CropCardState extends State<_CropCard> {
             'Demanda hídrica del cultivo',
             '${_n(profile.waterMin)}–${_n(profile.waterMax)} ${profile.waterUnit}',
           ),
-          const Text(
+          Text(
             'La demanda del cultivo no es el riego aplicado ni un ahorro de agua garantizado.',
-            style: TextStyle(fontSize: 11, color: muted, height: 1.4),
+            style: TextStyle(
+              fontSize: 11,
+              color: context.colors.muted,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: 10),
           _field(
             'Referencias N / P₂O₅ / K₂O (kg/ha)',
             '${_n(profile.nMin)}–${_n(profile.nMax)} / ${_n(profile.pMin)}–${_n(profile.pMax)} / ${_n(profile.kMin)}–${_n(profile.kMax)}',
           ),
-          const Text(
+          Text(
             'Rangos referenciales del archivo; no se calculan dosis ni se comparan con los índices N/P/K de demostración.',
-            style: TextStyle(fontSize: 11, color: muted, height: 1.4),
+            style: TextStyle(
+              fontSize: 11,
+              color: context.colors.muted,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: 10),
           _field(
@@ -691,7 +719,7 @@ class _KnowledgeLibrary extends StatelessWidget {
         const SizedBox(height: 5),
         Text(
           '${catalog.crops.length} cultivos · ${catalog.compatibility.length} pares de compatibilidad',
-          style: const TextStyle(color: muted, fontSize: 12),
+          style: TextStyle(color: context.colors.muted, fontSize: 12),
         ),
         ExpansionTile(
           key: const PageStorageKey('knowledge-sequences'),
@@ -832,48 +860,57 @@ Widget _microDetails(MicroorganismProfile micro) => Column(
   ],
 );
 
-Widget _field(String label, String value) => Padding(
-  padding: const EdgeInsets.only(bottom: 12),
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(label, style: const TextStyle(fontSize: 11, color: muted)),
-      const SizedBox(height: 3),
-      Text(value, style: const TextStyle(fontSize: 12, height: 1.5)),
-    ],
-  ),
-);
-
-Widget _note(String title, String message) => Container(
-  width: double.infinity,
-  padding: const EdgeInsets.all(12),
-  decoration: BoxDecoration(
-    color: paleBlue,
-    borderRadius: BorderRadius.circular(12),
-  ),
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        title,
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
-      ),
-      const SizedBox(height: 5),
-      Text(message, style: const TextStyle(fontSize: 12, height: 1.5)),
-    ],
-  ),
-);
-
-Widget _reading(String label, String value) => Column(
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-    Text(label, style: const TextStyle(fontSize: 10, color: muted)),
-    const SizedBox(height: 3),
-    Text(
-      value,
-      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+Widget _field(String label, String value) => Builder(
+  builder: (context) => Padding(
+    padding: const EdgeInsets.only(bottom: 12),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(fontSize: 11, color: context.colors.muted),
+        ),
+        const SizedBox(height: 3),
+        Text(value, style: const TextStyle(fontSize: 12, height: 1.5)),
+      ],
     ),
-  ],
+  ),
+);
+
+Widget _note(String title, String message) => Builder(
+  builder: (context) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: context.colors.softBlue,
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 5),
+        Text(message, style: const TextStyle(fontSize: 12, height: 1.5)),
+      ],
+    ),
+  ),
+);
+
+Widget _reading(String label, String value) => Builder(
+  builder: (context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(label, style: TextStyle(fontSize: 10, color: context.colors.muted)),
+      const SizedBox(height: 3),
+      Text(
+        value,
+        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+      ),
+    ],
+  ),
 );
 Widget _tag(String text, Color color) => Container(
   padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),

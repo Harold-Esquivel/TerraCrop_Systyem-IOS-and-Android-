@@ -29,19 +29,19 @@ class DevicesScreen extends StatelessWidget {
               StaggerItem(
                 index: 0,
                 child: SurfaceCard(
-                  color: paleBlue,
+                  color: context.colors.softBlue,
                   child: Row(
                     children: [
                       Container(
                         width: 52,
                         height: 52,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: context.colors.surface,
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.hub_outlined,
-                          color: blue,
+                          color: context.colors.blue,
                           size: 27,
                         ),
                       ),
@@ -52,16 +52,16 @@ class DevicesScreen extends StatelessWidget {
                           children: [
                             Text(
                               '$total dispositivos',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w800,
-                                color: ink,
+                                color: context.colors.ink,
                               ),
                             ),
                             Text(
                               '$connected conectados ahora',
-                              style: const TextStyle(
-                                color: muted,
+                              style: TextStyle(
+                                color: context.colors.muted,
                                 fontSize: 12,
                               ),
                             ),
@@ -94,27 +94,28 @@ class DevicesScreen extends StatelessWidget {
                           children: [
                             Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.grid_view_rounded,
                                   size: 17,
-                                  color: blue,
+                                  color: context.colors.blue,
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     parcels[i].name,
-                                    maxLines: 1, overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w800,
-                                      color: ink,
+                                      color: context.colors.ink,
                                     ),
                                   ),
                                 ),
                                 Text(
                                   '${parcels[i].devices.length} equipos',
-                                  style: const TextStyle(
-                                    color: muted,
+                                  style: TextStyle(
+                                    color: context.colors.muted,
                                     fontSize: 11,
                                   ),
                                 ),
@@ -122,19 +123,19 @@ class DevicesScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 12),
                             for (final device in parcels[i].devices) ...[
-                              const Divider(height: 18, color: border),
+                              Divider(height: 18, color: context.colors.border),
                               Row(
                                 children: [
                                   Container(
                                     width: 39,
                                     height: 39,
                                     decoration: BoxDecoration(
-                                      color: canvas,
+                                      color: context.colors.canvas,
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Icon(
                                       _icon(device.kind),
-                                      color: blue,
+                                      color: context.colors.blue,
                                       size: 20,
                                     ),
                                   ),
@@ -153,8 +154,8 @@ class DevicesScreen extends StatelessWidget {
                                         ),
                                         Text(
                                           device.kind,
-                                          style: const TextStyle(
-                                            color: muted,
+                                          style: TextStyle(
+                                            color: context.colors.muted,
                                             fontSize: 11,
                                           ),
                                         ),
@@ -170,7 +171,9 @@ class DevicesScreen extends StatelessWidget {
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
-                                      color: device.connected ? green : muted,
+                                      color: device.connected
+                                          ? context.colors.green
+                                          : context.colors.muted,
                                     ),
                                   ),
                                 ],
@@ -223,11 +226,13 @@ class _StatusDotState extends State<_StatusDot>
       height: 8,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: widget.active ? green : muted,
+        color: widget.active ? context.colors.green : context.colors.muted,
         boxShadow: widget.active
             ? [
                 BoxShadow(
-                  color: green.withValues(alpha: .15 + controller.value * .3),
+                  color: context.colors.green.withValues(
+                    alpha: .15 + controller.value * .3,
+                  ),
                   blurRadius: 4 + controller.value * 5,
                 ),
               ]

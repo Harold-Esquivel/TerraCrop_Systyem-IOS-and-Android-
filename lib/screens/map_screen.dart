@@ -24,10 +24,10 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   Color parcelColor(Parcel parcel) => parcel.critical
       ? const Color(0xFFE58A4D)
       : parcel.hasOnlyMissingSoilData
-      ? muted
+      ? context.colors.muted
       : parcel.warning
       ? const Color(0xFFD8A13D)
-      : green;
+      : context.colors.green;
   static const _mapboxToken = String.fromEnvironment('MAPBOX_ACCESS_TOKEN');
 
   final controller = MapController();
@@ -257,11 +257,14 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.colors.surface,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: border),
+              border: Border.all(color: context.colors.border),
             ),
-            child: const Icon(Icons.notifications_none_rounded, color: ink),
+            child: Icon(
+              Icons.notifications_none_rounded,
+              color: context.colors.ink,
+            ),
           ),
         ),
         Padding(
@@ -273,7 +276,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
               MetricPill(
                 icon: Icons.grid_view_rounded,
                 label: '${store.parcels.length} parcelas',
-                color: blue,
+                color: context.colors.blue,
               ),
               MetricPill(
                 icon: Icons.eco_outlined,
@@ -347,7 +350,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                             : 1),
                                   ),
                                   borderColor: parcel.id == selectedId
-                                      ? blue
+                                      ? context.colors.blue
                                       : parcelColor(parcel),
                                   borderStrokeWidth: parcel.id == selectedId
                                       ? 4 + 2 * math.sin(math.pi * pulse.value)
@@ -356,8 +359,10 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                               if (draft != null)
                                 Polygon(
                                   points: draft!,
-                                  color: blue.withValues(alpha: .25),
-                                  borderColor: blue,
+                                  color: context.colors.blue.withValues(
+                                    alpha: .25,
+                                  ),
+                                  borderColor: context.colors.blue,
                                   borderStrokeWidth: 3,
                                 ),
                             ],
@@ -382,7 +387,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                     child: Container(
                                       alignment: Alignment.center,
                                       decoration: BoxDecoration(
-                                        color: Colors.white,
+                                        color: context.colors.surface,
                                         borderRadius: BorderRadius.circular(10),
                                         boxShadow: const [
                                           BoxShadow(
@@ -419,10 +424,15 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                   horizontal: 5,
                                   vertical: 3,
                                 ),
-                                color: Colors.white.withValues(alpha: .88),
-                                child: const Text(
+                                color: context.colors.surface.withValues(
+                                  alpha: .88,
+                                ),
+                                child: Text(
                                   '© OpenStreetMap contributors',
-                                  style: TextStyle(fontSize: 10, color: ink),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: context.colors.ink,
+                                  ),
                                 ),
                               ),
                             ),
@@ -441,10 +451,10 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                   ),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.touch_app_outlined,
                         size: 18,
-                        color: blue,
+                        color: context.colors.blue,
                       ),
                       const SizedBox(width: 9),
                       Expanded(
@@ -468,10 +478,10 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                             drawing = false;
                             firstCorner = null;
                           }),
-                          child: const Icon(
+                          child: Icon(
                             Icons.close,
                             size: 18,
-                            color: muted,
+                            color: context.colors.muted,
                           ),
                         ),
                     ],
@@ -530,7 +540,10 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                           const SizedBox(height: 5),
                           Text(
                             '${selected.crop} · pH ${selected.ph.toStringAsFixed(1)} · ${selected.devices.length} dispositivos',
-                            style: const TextStyle(color: muted, fontSize: 12),
+                            style: TextStyle(
+                              color: context.colors.muted,
+                              fontSize: 12,
+                            ),
                           ),
                           const SizedBox(height: 14),
                           Row(

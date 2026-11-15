@@ -1,5 +1,7 @@
 import 'dart:ui' show lerpDouble;
 
+import 'package:provider/provider.dart';
+
 import 'package:flutter/material.dart';
 
 import '../screens/crops_screen.dart';
@@ -8,6 +10,7 @@ import '../screens/profile_screen.dart';
 import '../screens/smart_cycle_screen.dart';
 import '../screens/smart_market_screen.dart';
 import 'app_theme.dart';
+import 'app_appearance.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -87,6 +90,8 @@ class _AppShellState extends State<AppShell>
       const MapScreen(),
     ];
     return Scaffold(
+      floatingActionButton: selected == 0 ? const _AppearanceButton() : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SafeArea(
         bottom: false,
         child: FadeTransition(
@@ -118,20 +123,15 @@ class _AppShellState extends State<AppShell>
           child: Container(
             height: 82,
             decoration: BoxDecoration(
-              color: const Color(0xFFFCFEFF),
+              color: context.colors.surface,
               borderRadius: BorderRadius.circular(26),
-              border: Border.all(color: Colors.white, width: 1.6),
+              border: Border.all(color: context.colors.border, width: 1.6),
               boxShadow: const [
                 BoxShadow(
                   color: Color(0x263A607D),
                   blurRadius: 22,
                   spreadRadius: 1,
                   offset: Offset(0, 9),
-                ),
-                BoxShadow(
-                  color: Colors.white,
-                  blurRadius: 10,
-                  offset: Offset(-3, -4),
                 ),
               ],
             ),
@@ -156,8 +156,8 @@ class _AppShellState extends State<AppShell>
                                 shape: BoxShape.circle,
                                 gradient: LinearGradient(
                                   colors: [
-                                    Color(0xFF3988F0),
-                                    Color(0xFF226BDD),
+                                    Color(0xFF16815E),
+                                    Color(0xFF1769D2),
                                   ],
                                 ),
                                 boxShadow: [
@@ -215,9 +215,10 @@ class _AppShellState extends State<AppShell>
                                                       icons[i],
                                                       size: 23,
                                                       color: Color.lerp(
-                                                        muted.withValues(
-                                                          alpha: .78,
-                                                        ),
+                                                        context.colors.muted
+                                                            .withValues(
+                                                              alpha: .78,
+                                                            ),
                                                         Colors.white,
                                                         (1 -
                                                                 (position - i)
@@ -239,10 +240,11 @@ class _AppShellState extends State<AppShell>
                                                   fontSize: 10,
                                                   letterSpacing: -.15,
                                                   color: i == selected
-                                                      ? blue
-                                                      : muted.withValues(
-                                                          alpha: .85,
-                                                        ),
+                                                      ? context.colors.blue
+                                                      : context.colors.muted
+                                                            .withValues(
+                                                              alpha: .85,
+                                                            ),
                                                   fontWeight: i == selected
                                                       ? FontWeight.w800
                                                       : FontWeight.w600,
@@ -264,6 +266,54 @@ class _AppShellState extends State<AppShell>
                 );
               },
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AppearanceButton extends StatelessWidget {
+  const _AppearanceButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final appearance = context.watch<AppAppearance?>();
+    final dark =
+        appearance?.isDark ?? Theme.of(context).brightness == Brightness.dark;
+    final label = dark ? 'Activar modo claro' : 'Activar modo oscuro';
+    return Semantics(
+      label: label,
+      button: true,
+      toggled: dark,
+      child: FloatingActionButton.small(
+        key: const Key('profile-theme-toggle'),
+        heroTag: 'profile-appearance',
+        tooltip: label,
+        backgroundColor: context.colors.softBlue,
+        foregroundColor: context.colors.blue,
+        elevation: 3,
+        onPressed: appearance == null || appearance.saving
+            ? null
+            : () async {
+                try {
+                  await appearance.toggle();
+                } catch (_) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'No se pudo guardar la apariencia. Inténtalo de nuevo.',
+                      ),
+                    ),
+                  );
+                }
+              },
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          child: Icon(
+            dark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+            key: ValueKey(dark),
           ),
         ),
       ),

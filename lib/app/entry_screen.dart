@@ -74,10 +74,10 @@ class _EntryScreenState extends State<EntryScreen>
                               sigmaX: 9 * (1 - name),
                               sigmaY: 9 * (1 - name),
                             ),
-                            child: const Text(
+                            child: Text(
                               'TerraCrop',
                               style: TextStyle(
-                                color: ink,
+                                color: context.colors.ink,
                                 fontSize: 35,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: -1.4,
@@ -119,7 +119,7 @@ class _EntryScreenState extends State<EntryScreen>
                     ),
                   ),
                 ),
-                const Positioned(
+                Positioned(
                   left: 0,
                   right: 0,
                   bottom: 20,
@@ -127,7 +127,7 @@ class _EntryScreenState extends State<EntryScreen>
                     'AGRICULTURA INTELIGENTE · MODO PRUEBA',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: muted,
+                      color: context.colors.muted,
                       fontSize: 10,
                       letterSpacing: 1.3,
                       fontWeight: FontWeight.w700,

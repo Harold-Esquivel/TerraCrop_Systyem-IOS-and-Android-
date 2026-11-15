@@ -33,9 +33,11 @@ Al abrir la app aparece el logo de TerraCrop, después el nombre con un efecto d
 
 ## Módulos
 
+La identidad visual combina blanco, verde y azul: tarjetas claras, acentos verdes y degradados hacia azul. El modo oscuro utiliza fondos azul profundo, superficies diferenciadas y acentos de mayor contraste.
+
 La barra inferior sigue este orden y abre **Mi perfil** al iniciar:
 
-1. **Mi perfil:** nombre editable, racha diaria, actividad y botón **Dispositivos**, que abre los sensores y equipos por parcela con su conexión y batería.
+1. **Mi perfil:** nombre editable, racha diaria, actividad y botón **Dispositivos**, que abre los sensores y equipos por parcela con su conexión y batería. Un botón de luna a la derecha, sobre la barra de módulos, activa el modo oscuro; cambia a sol para volver al modo claro. La elección se guarda localmente y se aplica a todas las pantallas, ventanas y formularios.
 2. **Smart-Cycle:** simulador por parcela con sequía, calor, lluvia intensa, helada, riego, fertilización y plagas combinables. Permite ajustar intensidad, condiciones iniciales, horizonte de 1 a 60 días y días que faltan para cosechar. El botón **Ver el resultado** abre una carga de tres segundos con la misma animación de plantas del inicio de sesión. Después muestra los eventos elegidos, la comparación con una referencia sin eventos, gráficas y estadísticas. **Cambiar escenario** permite volver y generar otra simulación. Volver durante la carga cancela la apertura del resultado.
 3. **Cultivos:** diagnóstico simultáneo de pH, humedad y N/P/K; análisis de suelo opcional; historial de campañas; rotaciones por compatibilidad, familia, pH y salinidad; fichas, secuencias, microorganismos y fuentes del Excel.
 4. **Smart-Market:** tienda ficticia de seis sensores del archivo **Resumen de Sensores Agrícolas**, con búsqueda, filtros, fichas, carrito y pedido de demostración sin cobros ni envíos. Mantiene soles y dólares separados: SEN0193 S/37, DS18B20 S/20, SHT31 S/30, SEN0161-V2 S/250, DFR0300 US$69.90 y SEN0604 US$69 por importación. La referencia local del SEN0604, S/390, se muestra agotada. Son referencias del archivo, no cotizaciones ni stock en vivo.
@@ -74,7 +76,7 @@ La cuenta anónima conserva su identidad en la instalación actual. Para recuper
 
 ## Distribución Android
 
-La versión actual es **1.1.1+3**, con API mínima 24. Para compartir en teléfonos, utiliza un APK release. Se verificó la instalación del release anterior y su actualización al nuevo en Android 15 ARM64 virtual; esto no determina la causa del fallo reportado en teléfonos físicos enviados por WhatsApp. La evidencia y los límites están en [docs/ANDROID_INSTALLATION.md](docs/ANDROID_INSTALLATION.md).
+La versión actual es **1.2.0+4**, con API mínima 24. Para compartir en teléfonos, utiliza un APK release. Se verificó la instalación del release anterior y su actualización al nuevo en Android 15 ARM64 virtual; esto no determina la causa del fallo reportado en teléfonos físicos enviados por WhatsApp. La evidencia y los límites están en [docs/ANDROID_INSTALLATION.md](docs/ANDROID_INSTALLATION.md).
 
 La compilación universal cubre ARM32, ARM64 y x86_64. Para un teléfono ARM64 puede generarse un archivo más pequeño sin cambiar el código de versión:
 
@@ -92,7 +94,7 @@ flutter test
 flutter build apk --debug
 ```
 
-La integración del Excel está cubierta por 82 pruebas unitarias y de interfaz, más las 12 pruebas de aceptación de `audit/`. La prueba nativa aislada de Android verifica catálogo, déficits combinados, análisis parcial, rotación e historial con datos en memoria:
+La suite incluye 86 pruebas unitarias y de interfaz para los datos agrícolas y las funciones de la app, más las 12 pruebas de aceptación de `audit/`. La prueba nativa aislada de Android verifica catálogo, déficits combinados, análisis parcial, rotación e historial con datos en memoria:
 
 ```sh
 flutter test audit/crop_recommendations_audit_test.dart
@@ -122,6 +124,12 @@ Para verificar los nuevos módulos, el acceso a Dispositivos y la conservación 
 
 ```sh
 flutter drive --driver=test_driver/modules_driver.dart --target=integration_test/modules_device_test.dart -d ID_DEL_DISPOSITIVO
+```
+
+Para comprobar el cambio claro/oscuro, su persistencia, los resultados de Smart-Cycle y el carrito, con capturas en `build/appearance-review/captures/`:
+
+```sh
+flutter drive --driver=test_driver/appearance_driver.dart --target=integration_test/appearance_device_test.dart -d ID_DEL_DISPOSITIVO
 ```
 
 La estructura separa `data/` (modelos, estado y servicios), `app/` (tema y navegación) y `screens/` (módulos). Provider comparte el estado entre pantallas. Las animaciones de navegación, entrada escalonada, parcelas y controles usan widgets nativos de Flutter.

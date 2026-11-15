@@ -56,7 +56,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(22, 0, 22, 25),
+            padding: const EdgeInsets.fromLTRB(22, 0, 22, 95),
             children: [
               StaggerItem(
                 index: 0,
@@ -67,13 +67,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         width: 64,
                         height: 64,
                         decoration: BoxDecoration(
-                          color: paleBlue,
+                          color: context.colors.softBlue,
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.person_rounded,
                           size: 35,
-                          color: blue,
+                          color: context.colors.blue,
                         ),
                       ),
                       const SizedBox(width: 15),
@@ -86,16 +86,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               style: Theme.of(context).textTheme.titleLarge,
                             ),
                             const SizedBox(height: 5),
-                            const Text(
+                            Text(
                               'Miembro de TerraCrop',
-                              style: TextStyle(color: muted, fontSize: 12),
+                              style: TextStyle(
+                                color: context.colors.muted,
+                                fontSize: 12,
+                              ),
                             ),
                           ],
                         ),
                       ),
                       IconButton(
                         onPressed: editName,
-                        icon: const Icon(Icons.edit_outlined, color: blue),
+                        icon: Icon(
+                          Icons.edit_outlined,
+                          color: context.colors.blue,
+                        ),
                         tooltip: 'Editar nombre',
                       ),
                     ],
@@ -127,7 +133,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(23),
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF1D5DD1), Color(0xFF3689F1)],
+                      colors: [Color(0xFF12624B), Color(0xFF1769D2)],
                     ),
                   ),
                   child: Column(
@@ -137,7 +143,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           Icon(
                             Icons.local_fire_department_rounded,
-                            color: Color(0xFFFFD36C),
+                            color: Color(0xFFB6F4D6),
                           ),
                           SizedBox(width: 8),
                           Text(
@@ -179,7 +185,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           borderRadius: BorderRadius.circular(8),
                           backgroundColor: Colors.white24,
                           valueColor: const AlwaysStoppedAnimation(
-                            Color(0xFFFFD36C),
+                            Color(0xFFB6F4D6),
                           ),
                         ),
                       ),
@@ -211,13 +217,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         'Parcelas',
                         Icons.grid_view_rounded,
                       ),
-                      Container(width: 1, height: 40, color: border),
+                      Container(
+                        width: 1,
+                        height: 40,
+                        color: context.colors.border,
+                      ),
                       _stat(
                         '${store.parcels.fold<int>(0, (s, p) => s + p.devices.length)}',
                         'Dispositivos',
                         Icons.sensors_outlined,
                       ),
-                      Container(width: 1, height: 40, color: border),
+                      Container(
+                        width: 1,
+                        height: 40,
+                        color: context.colors.border,
+                      ),
                       _stat(
                         '${store.parcels.where((p) => !p.warning).length}',
                         'Saludables',
@@ -228,18 +242,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 18),
-              const StaggerItem(
+              StaggerItem(
                 index: 3,
                 child: SurfaceCard(
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline, color: blue),
+                      Icon(Icons.info_outline, color: context.colors.blue),
                       SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           'Los datos de sensores son demostrativos. Explora escenarios desde Smart-Cycle.',
                           style: TextStyle(
-                            color: muted,
+                            color: context.colors.muted,
                             fontSize: 12,
                             height: 1.4,
                           ),
@@ -259,17 +273,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _stat(String value, String label, IconData icon) => Expanded(
     child: Column(
       children: [
-        Icon(icon, color: blue, size: 19),
+        Icon(icon, color: context.colors.blue, size: 19),
         const SizedBox(height: 6),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w800,
-            color: ink,
+            color: context.colors.ink,
           ),
         ),
-        Text(label, style: const TextStyle(color: muted, fontSize: 10)),
+        Text(
+          label,
+          style: TextStyle(color: context.colors.muted, fontSize: 10),
+        ),
       ],
     ),
   );

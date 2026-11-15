@@ -228,14 +228,14 @@ class _MapboxParcelMapState extends State<MapboxParcelMap> {
       parcelIds.add(parcel.id);
       final selected = parcel.id == widget.selectedId;
       final color = selected
-          ? blue
+          ? context.colors.blue
           : parcel.critical
           ? const Color(0xFFE58A4D)
           : parcel.hasOnlyMissingSoilData
-          ? muted
+          ? context.colors.muted
           : parcel.warning
           ? const Color(0xFFD8A13D)
-          : green;
+          : context.colors.green;
       polygonOptions.add(
         PolygonAnnotationOptions(
           geometry: _geometry(parcel.points),
@@ -250,9 +250,9 @@ class _MapboxParcelMapState extends State<MapboxParcelMap> {
       polygonOptions.add(
         PolygonAnnotationOptions(
           geometry: _geometry(draft),
-          fillColor: blue.toARGB32(),
+          fillColor: context.colors.blue.toARGB32(),
           fillOpacity: .35,
-          fillOutlineColor: blue.toARGB32(),
+          fillOutlineColor: context.colors.blue.toARGB32(),
         ),
       );
     }
@@ -286,7 +286,7 @@ class _MapboxParcelMapState extends State<MapboxParcelMap> {
           textField: parcel.name,
           textSize: 12,
           textColor: Colors.white.toARGB32(),
-          textHaloColor: ink.toARGB32(),
+          textHaloColor: context.colors.ink.toARGB32(),
           textHaloWidth: 1.5,
         ),
       );
@@ -305,7 +305,7 @@ class _MapboxParcelMapState extends State<MapboxParcelMap> {
         circleOptions.add(
           CircleAnnotationOptions(
             geometry: Point(coordinates: _position(selected.points[index])),
-            circleColor: blue.toARGB32(),
+            circleColor: context.colors.blue.toARGB32(),
             circleRadius: 9,
             circleStrokeColor: Colors.white.toARGB32(),
             circleStrokeWidth: 2,
@@ -319,7 +319,7 @@ class _MapboxParcelMapState extends State<MapboxParcelMap> {
       circleOptions.add(
         CircleAnnotationOptions(
           geometry: Point(coordinates: _position(corner)),
-          circleColor: blue.toARGB32(),
+          circleColor: context.colors.blue.toARGB32(),
           circleRadius: 8,
           circleStrokeColor: Colors.white.toARGB32(),
           circleStrokeWidth: 2,

@@ -31,10 +31,10 @@ class GrowingLoadingView extends StatelessWidget {
               children: [
                 const LogoMark(size: 138),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'TerraCrop',
                   style: TextStyle(
-                    color: ink,
+                    color: context.colors.ink,
                     fontSize: 30,
                     fontWeight: FontWeight.w900,
                     letterSpacing: -1.2,
@@ -46,7 +46,7 @@ class GrowingLoadingView extends StatelessWidget {
                   constraints: const BoxConstraints(maxWidth: 340),
                   padding: const EdgeInsets.fromLTRB(15, 6, 15, 10),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: context.colors.surface,
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: const [
                       BoxShadow(
@@ -71,8 +71,8 @@ class GrowingLoadingView extends StatelessWidget {
                       messages[index],
                       key: ValueKey(index),
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: ink,
+                      style: TextStyle(
+                        color: context.colors.ink,
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                       ),
@@ -83,7 +83,7 @@ class GrowingLoadingView extends StatelessWidget {
                 Text(
                   subtitle,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: muted, fontSize: 12),
+                  style: TextStyle(color: context.colors.muted, fontSize: 12),
                 ),
               ],
             ),
