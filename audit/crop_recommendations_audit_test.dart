@@ -54,25 +54,18 @@ Future<AdviceSnapshot> inspectAdvice(
     ),
   );
   await tester.pump(const Duration(milliseconds: 600));
-  final summary = find.byKey(ValueKey('crop-issue-summary-${parcel.id}'));
-  final notice = summary.evaluate().isEmpty
-      ? ''
-      : tester.widget<Text>(summary).data ?? '';
   final expand = find.byKey(ValueKey('crop-recommendations-${parcel.id}'));
-  await tester.scrollUntilVisible(
-    expand,
-    160,
-    scrollable: find.byType(Scrollable).first,
-  );
-  await tester.pump(const Duration(milliseconds: 400));
-  await tester.tap(expand);
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 400));
-  expect(
-    find.text('Diagnóstico y acciones'),
-    findsOneWidget,
-    reason: 'La auditoría debe poder leer el panel expandido',
-  );
+  if (expand.evaluate().isNotEmpty) {
+    await tester.scrollUntilVisible(
+      expand,
+      160,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(expand);
+    await tester.pumpAndSettle();
+  }
+  expect(find.text('Cuidados prioritarios'), findsOneWidget);
   final issuePrefix = 'crop-issue-${parcel.id}-';
   final issueFinder = find.byWidgetPredicate(
     (widget) =>
@@ -98,26 +91,44 @@ Future<AdviceSnapshot> inspectAdvice(
           .map((t) => t.data ?? ''),
     );
   }
+  final notice = detailTexts.join(' ');
   if (issueIds.isEmpty) {
-    const emptyMessage =
-        'No se detectan alertas con los datos disponibles. Esto no reemplaza un análisis completo del suelo.';
-    expect(find.text(emptyMessage), findsOneWidget);
-    detailTexts.add(emptyMessage);
+    expect(find.text('Sin alertas con los datos disponibles'), findsOneWidget);
+    detailTexts.add('Mantén el monitoreo de humedad y nutrientes.');
   }
+  final rotationButton = find.byKey(ValueKey('crop-rotations-${parcel.id}'));
+  await tester.scrollUntilVisible(
+    rotationButton,
+    200,
+    scrollable: find.byType(Scrollable).first,
+  );
+  await tester.pumpAndSettle();
+  await tester.tap(rotationButton);
+  await tester.pumpAndSettle();
   final rotationPrefix = 'rotation-${parcel.id}-';
-  final validRotationIds = find
-      .byWidgetPredicate(
-        (widget) =>
-            widget.key is ValueKey<String> &&
-            (widget.key! as ValueKey<String>).value.startsWith(rotationPrefix),
-      )
-      .evaluate()
-      .map(
-        (element) => (element.widget.key! as ValueKey<String>).value.substring(
-          rotationPrefix.length,
-        ),
-      )
-      .toSet();
+  final validRotationIds = <String>{};
+  for (var i = 0; i < 20; i++) {
+    validRotationIds.addAll(
+      find
+          .byWidgetPredicate(
+            (widget) =>
+                widget.key is ValueKey<String> &&
+                (widget.key! as ValueKey<String>).value.startsWith(
+                  rotationPrefix,
+                ),
+          )
+          .evaluate()
+          .map(
+            (element) => (element.widget.key! as ValueKey<String>).value
+                .substring(rotationPrefix.length),
+          ),
+    );
+    final scroll = find.byType(Scrollable).last;
+    final position = tester.state<ScrollableState>(scroll).position;
+    if (position.pixels >= position.maxScrollExtent) break;
+    await tester.drag(scroll, const Offset(0, -350));
+    await tester.pumpAndSettle();
+  }
   final details = detailTexts.join(' ');
   expect(tester.takeException(), isNull);
   expect(
@@ -321,7 +332,7 @@ void main() {
       i < 50 && blockedHeader.hitTestable().evaluate().isEmpty;
       i++
     ) {
-      await tester.drag(find.byType(Scrollable).first, const Offset(0, -400));
+      await tester.drag(find.byType(Scrollable).last, const Offset(0, -400));
       await tester.pump(const Duration(milliseconds: 300));
     }
     expect(blockedHeader.hitTestable(), findsOneWidget);

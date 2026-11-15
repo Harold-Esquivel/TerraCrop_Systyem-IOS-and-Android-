@@ -21,7 +21,7 @@ Future<void> waitFor(WidgetTester tester, Finder finder) async {
 
 /// Wait for native keyboard and viewport changes before relying on a tap.
 Future<void> reveal(WidgetTester tester, Finder finder) async {
-  final scrollable = find.byType(Scrollable).first;
+  final scrollable = find.byType(Scrollable).last;
   await tester.scrollUntilVisible(
     finder,
     240,
@@ -55,7 +55,7 @@ void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets(
-    'base Excel, déficits, análisis parcial y rotación en dispositivo',
+    'cuidados puntuales, apariencia, análisis parcial y rotación en dispositivo',
     (tester) async {
       // Never initialise Firebase, notifications or the app's normal main(). All
       // preferences used by this test live only in this Dart process's memory.
@@ -88,12 +88,24 @@ void main() {
         name: 'Parcela QA · Papa',
         crop: 'Papa',
         points: demoParcels().first.points,
-        ph: 5.3,
+        ph: 6.5,
         moisture: 20,
         nitrogen: 20,
         phosphorus: 20,
         potassium: 20,
         cropHistory: const ['Cebolla'],
+        soilAnalysis: const SoilAnalysis(
+          ph: 6.5,
+          ec: 0.5,
+          organicMatter: 1.2,
+          nitrogen: NutrientLevel.low,
+          phosphorus: NutrientLevel.low,
+          potassium: NutrientLevel.low,
+          moistureLow: true,
+          sandySoil: true,
+          waterlogged: false,
+          soilDiseaseHistory: false,
+        ),
       );
       store.parcels = [fixture];
       final original = fixture.toJson();
@@ -111,53 +123,65 @@ void main() {
       await binding.convertFlutterSurfaceToImage();
       await tester.pump();
 
-      // The overview must name all five simultaneous problems, not just pH.
-      final summary = find.byKey(const Key('crop-issue-summary-qa-agronomy'));
-      await waitFor(tester, summary);
+      // Only three actions appear initially; the remaining two are opt-in.
+      expect(find.text('5 acciones para esta parcela'), findsOneWidget);
+      for (final issue in ['S011', 'S007', 'S009']) {
+        expect(
+          find.byKey(Key('crop-issue-qa-agronomy-$issue')),
+          findsOneWidget,
+        );
+      }
       expect(
-        tester.widget<Text>(summary).data!.toLowerCase(),
-        allOf(
-          contains('ph'),
-          contains('humedad'),
-          contains('nitrógeno'),
-          contains('fósforo'),
-          contains('potasio'),
-        ),
+        find.byKey(const Key('crop-issue-qa-agronomy-S008')),
+        findsNothing,
       );
-      await binding.takeScreenshot('01-cultivos-base-excel');
+      expect(find.textContaining('Excel'), findsNothing);
+      await binding.takeScreenshot('care-01-cultivos-claro');
       final recommendations = find.byKey(
         const Key('crop-recommendations-qa-agronomy'),
       );
       await reveal(tester, recommendations);
       await tester.tap(recommendations.hitTestable());
       await tester.pumpAndSettle();
-      for (final issue in ['S006', 'demo-moisture', 'S009', 'S008', 'S010']) {
+      for (final issue in ['S011', 'S007', 'S009', 'S008', 'S010']) {
         expect(
           find.byKey(Key('crop-issue-qa-agronomy-$issue')),
           findsOneWidget,
         );
       }
-      await reveal(tester, find.text('Diagnóstico y acciones'));
-      await binding.takeScreenshot('02-deficits-combinados');
-      expect(
-        store.parcels.single.toJson(),
-        original,
-        reason: 'La consulta no debe modificar la parcela',
-      );
+      await reveal(tester, find.text('Refuerza el fósforo'));
+      await binding.takeScreenshot('care-02-cuidados-adicionales');
+      expect(store.parcels.single.toJson(), original);
 
-      // Enter a partial analysis. Missing laboratory values must remain unknown,
-      // even though the old demo indices still contain severe deficiencies.
+      // Check the same care cards in the persistent dark theme.
+      await tester.tap(find.byKey(const Key('nav-tab-0')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('profile-theme-toggle')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('nav-tab-2')));
+      await tester.pumpAndSettle();
+      await reveal(tester, recommendations);
+      await tester.tap(recommendations.hitTestable());
+      await tester.pumpAndSettle();
+      await reveal(tester, find.text('Cuidados prioritarios'));
+      await binding.takeScreenshot('care-03-cultivos-oscuro');
+
+      // A partial analysis replaces the old one, rather than inheriting its
+      // organic matter, nutrient levels or demo indices.
       final analysisButton = find.byKey(const Key('crop-analysis-qa-agronomy'));
+      // Use an empty in-memory analysis to exercise first-time data entry.
+      await store.updateParcel(
+        fixture.copyWith(soilAnalysis: const SoilAnalysis()),
+      );
+      await tester.pumpAndSettle();
       await reveal(tester, analysisButton);
       await tester.tap(analysisButton.hitTestable());
       await tester.pumpAndSettle();
-      expect(find.byType(SoilAnalysisEditor), findsOneWidget);
       final ph = find.byKey(const Key('analysis-ph'));
       await reveal(tester, ph);
       await tester.enterText(ph, '6,5');
       FocusManager.instance.primaryFocus?.unfocus();
       await tester.pumpAndSettle();
-      await binding.takeScreenshot('03-analisis-parcial');
       final save = find.byKey(const Key('analysis-save'));
       await reveal(tester, save);
       await tester.tap(save.hitTestable());
@@ -172,23 +196,23 @@ void main() {
       expect(updated.cropHistory, fixture.cropHistory);
       expect(updated.points, fixture.points);
       expect(updated.crop, 'Papa');
-      expect(
-        updated.nitrogen,
-        20,
-        reason:
-            'No convertir referencias kg/ha en índices ni modificar los datos originales',
-      );
-      expect(find.text('Análisis ingresado'), findsOneWidget);
-      expect(find.text('Datos por completar'), findsWidgets);
-      expect(find.text('20/100 · demo'), findsNothing);
-      for (final issue in ['S009', 'S008', 'S010', 'demo-moisture']) {
+      for (final issue in [
+        'S007',
+        'S009',
+        'S008',
+        'S010',
+        'S011',
+        'demo-moisture',
+      ]) {
         expect(find.byKey(Key('crop-issue-qa-agronomy-$issue')), findsNothing);
       }
-      await reveal(tester, find.text('Análisis ingresado'));
-      await binding.takeScreenshot('04-datos-por-completar');
+      await reveal(tester, find.text('Cuidados prioritarios'));
+      await binding.takeScreenshot('care-04-datos-por-completar');
 
-      // Papa, tomato and pepper share the current family and must not be offered
-      // as the next rotation; the allowed list must also be non-empty.
+      final rotations = find.byKey(const Key('crop-rotations-qa-agronomy'));
+      await reveal(tester, rotations);
+      await tester.tap(rotations.hitTestable());
+      await tester.pumpAndSettle();
       for (final crop in ['C002', 'C006', 'C012']) {
         expect(find.byKey(Key('rotation-qa-agronomy-$crop')), findsNothing);
       }
@@ -196,19 +220,8 @@ void main() {
         find.byKey(const Key('rotation-qa-agronomy-C003')),
         findsOneWidget,
       );
-      expect(
-        find.byKey(const Key('rotation-qa-agronomy-C008')),
-        findsOneWidget,
-      );
-      await reveal(tester, find.text('¿Qué cultivar después?'));
-      await binding.takeScreenshot('05-rotaciones-condicionadas');
-      await reveal(tester, find.text('Ficha del cultivo en el Excel'));
-      await tester.tap(
-        find.text('Ficha del cultivo en el Excel').hitTestable(),
-      );
-      await tester.pumpAndSettle();
-      await reveal(tester, find.text('Referencias N / P₂O₅ / K₂O (kg/ha)'));
-      await binding.takeScreenshot('06-ficha-unidades-y-fuentes');
+      expect(find.textContaining('Excel'), findsNothing);
+      await binding.takeScreenshot('care-05-rotaciones');
 
       // Reload from the explicitly substituted, in-memory preferences to verify
       // persistence without touching any real Android app data.
@@ -231,7 +244,9 @@ void main() {
       binding.reportData ??= {};
       binding.reportData!['checks'] = {
         'catalog': '13 cultivos y 169 pares únicos',
-        'combinedDeficits': 'pH, humedad, N, P y K visibles',
+        'combinedDeficits':
+            'Tres cuidados prioritarios; otros dos disponibles al abrirlos',
+        'presentation': 'Sin referencias al Excel; claro y oscuro comprobados',
         'partialAnalysis': 'pH 6,5; NPK y CE desconocidos, sin fallback demo',
         'rotation': 'excluye Papa y Solanaceae; opciones válidas presentes',
         'history': 'conservado sin cambios',
@@ -241,6 +256,6 @@ void main() {
       store.dispose();
       reloaded.dispose();
     },
-    timeout: const Timeout(Duration(minutes: 1)),
+    timeout: const Timeout(Duration(minutes: 2)),
   );
 }

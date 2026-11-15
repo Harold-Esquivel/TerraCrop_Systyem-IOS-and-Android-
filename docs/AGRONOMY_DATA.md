@@ -23,3 +23,11 @@ Se aplica el límite superior exclusivo de los intervalos contiguos: pH 7.5 entr
 La comprobación de familias de las **tres campañas anteriores** es una regla conservadora de la aplicación, identificada como tal. No equivale a un periodo validado de saneamiento para una enfermedad concreta. El historial incluye campañas repetidas y conserva cultivos antiguos desconocidos, cuya familia no se inventa. Los posibles beneficios de leguminosas se condicionan a nodulación, fósforo, salinidad y manejo; no se prometen ahorros de fertilizante.
 
 Las referencias bibliográficas del libro se incluyen para consulta. La comprobación externa anterior se limita a las distinciones de unidades y conceptos mencionadas; no constituye validación independiente de todas las cifras, microorganismos ni afirmaciones del Excel.
+
+## Presentación de cuidados por parcela
+
+Cultivos muestra hasta tres acciones prioritarias; un control permite consultar las restantes. `crop_care_plan.dart` resume los problemas ya identificados por el motor, agrupa los avisos coincidentes de pH y salinidad, y conserva sus IDs de origen. El catálogo y las reglas importadas permanecen íntegros; la biblioteca técnica y las referencias al Excel no se muestran al usuario.
+
+Las acciones se ordenan por gravedad, con drenaje primero cuando hay encharcamiento porque condiciona el riego y el lavado de sales. Humedad baja y encharcamiento simultáneos solicitan revisar las observaciones antes de aumentar el agua. Estiércol curado o compost maduro se muestran cuando la materia orgánica registrada es inferior al 2%; no se asume este déficit si falta el dato. La salinidad mantiene la precaución de evitar estiércol fresco. Los niveles altos de nutrientes detienen una recomendación de aporte; los desconocidos no heredan los índices demo. No se calculan cantidades de fertilizante ni agua.
+
+La próxima siembra se presenta aparte y conserva los filtros del motor y las condiciones de nodulación, salinidad, presencia local y cultivo perenne. Las razones de descarte se pueden desplegar. Consultar los cuidados no modifica los datos; guardar un análisis actualiza solo su parcela y recalcula sus recomendaciones.

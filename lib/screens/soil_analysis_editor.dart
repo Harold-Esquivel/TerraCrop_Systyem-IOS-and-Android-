@@ -84,7 +84,7 @@ class _SoilAnalysisEditorState extends State<SoilAnalysisEditor> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                'Transcribe resultados y observaciones de un análisis. Deja vacío o en «Sin dato» lo que no conoces. Los índices de demostración no se copian a este formulario.',
+                'Registra tu análisis y lo que observas en la parcela. Deja en «Sin dato» lo que no conoces.',
                 style: TextStyle(height: 1.5),
               ),
               const SizedBox(height: 18),
@@ -115,7 +115,7 @@ class _SoilAnalysisEditorState extends State<SoilAnalysisEditor> {
               ),
               const SizedBox(height: 6),
               const Text(
-                'Usa la clasificación del laboratorio. Los kg/ha de la ficha del cultivo son referencias de demanda, no una lectura del suelo ni una dosis automática.',
+                'Selecciona el nivel que indica tu análisis de suelo.',
                 style: TextStyle(fontSize: 12, height: 1.4),
               ),
               _nutrient(
