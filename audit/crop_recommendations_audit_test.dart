@@ -1,24 +1,39 @@
 // Read-only acceptance audit of the currently rendered recommendations.
-// Outside test/ so known product gaps do not masquerade as passing regression
-// tests. Run explicitly; failures document missing requested behavior.
+// Kept outside test/ so the original acceptance criteria can be rerun explicitly
+// after the workbook-based remediation, separately from regression tests.
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 import 'package:terracrop/app/app_theme.dart';
-import 'package:terracrop/app/ui.dart';
+import 'package:terracrop/data/agronomy_catalog.dart';
 import 'package:terracrop/data/models.dart';
 import 'package:terracrop/data/terra_store.dart';
 import 'package:terracrop/screens/crops_screen.dart';
 
 class AdviceSnapshot {
-  const AdviceSnapshot(this.notice, this.details);
+  const AdviceSnapshot(
+    this.notice,
+    this.details,
+    this.issueIds,
+    this.validRotationIds,
+  );
   final String notice;
   final String details;
+  final Set<String> issueIds;
+  final Set<String> validRotationIds;
   String get combined => '$notice $details';
+}
+
+class _AuditAssetBundle extends CachingAssetBundle {
+  @override
+  Future<ByteData> load(String key) async =>
+      ByteData.sublistView(await File(key).readAsBytes());
 }
 
 Future<AdviceSnapshot> inspectAdvice(
@@ -39,29 +54,11 @@ Future<AdviceSnapshot> inspectAdvice(
     ),
   );
   await tester.pump(const Duration(milliseconds: 600));
-  var notice = '';
-  final tip = find.byIcon(Icons.tips_and_updates_outlined);
-  if (tip.evaluate().isNotEmpty) {
-    Element? alert;
-    tester.element(tip).visitAncestorElements((element) {
-      if (element.widget is Container) {
-        alert = element;
-        return false;
-      }
-      return true;
-    });
-    expect(alert, isNotNull);
-    notice = tester
-        .widgetList<Text>(
-          find.descendant(
-            of: find.byWidget(alert!.widget),
-            matching: find.byType(Text),
-          ),
-        )
-        .map((w) => w.data ?? '')
-        .join(' ');
-  }
-  final expand = find.text('Ver recomendaciones');
+  final summary = find.byKey(ValueKey('crop-issue-summary-${parcel.id}'));
+  final notice = summary.evaluate().isEmpty
+      ? ''
+      : tester.widget<Text>(summary).data ?? '';
+  final expand = find.byKey(ValueKey('crop-recommendations-${parcel.id}'));
   await tester.scrollUntilVisible(
     expand,
     160,
@@ -71,25 +68,57 @@ Future<AdviceSnapshot> inspectAdvice(
   await tester.tap(expand);
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 400));
-  final texts = tester
-      .widgetList<Text>(
-        find.descendant(
-          of: find.byType(SurfaceCard),
-          matching: find.byType(Text),
-        ),
-      )
-      .map((w) => w.data ?? '')
-      .toList();
-  final heading = texts.indexWhere(
-    (t) =>
-        t == 'Acciones recomendadas' || t == 'Cultivos alternativos sugeridos',
-  );
   expect(
-    heading,
-    greaterThanOrEqualTo(0),
+    find.text('Diagnóstico y acciones'),
+    findsOneWidget,
     reason: 'La auditoría debe poder leer el panel expandido',
   );
-  final details = texts[heading + 1];
+  final issuePrefix = 'crop-issue-${parcel.id}-';
+  final issueFinder = find.byWidgetPredicate(
+    (widget) =>
+        widget.key is ValueKey<String> &&
+        (widget.key! as ValueKey<String>).value.startsWith(issuePrefix),
+  );
+  final issueIds = <String>{};
+  final detailTexts = <String>[];
+  for (final element in issueFinder.evaluate()) {
+    issueIds.add(
+      (element.widget.key! as ValueKey<String>).value.substring(
+        issuePrefix.length,
+      ),
+    );
+    detailTexts.addAll(
+      tester
+          .widgetList<Text>(
+            find.descendant(
+              of: find.byWidget(element.widget),
+              matching: find.byType(Text),
+            ),
+          )
+          .map((t) => t.data ?? ''),
+    );
+  }
+  if (issueIds.isEmpty) {
+    const emptyMessage =
+        'No se detectan alertas con los datos disponibles. Esto no reemplaza un análisis completo del suelo.';
+    expect(find.text(emptyMessage), findsOneWidget);
+    detailTexts.add(emptyMessage);
+  }
+  final rotationPrefix = 'rotation-${parcel.id}-';
+  final validRotationIds = find
+      .byWidgetPredicate(
+        (widget) =>
+            widget.key is ValueKey<String> &&
+            (widget.key! as ValueKey<String>).value.startsWith(rotationPrefix),
+      )
+      .evaluate()
+      .map(
+        (element) => (element.widget.key! as ValueKey<String>).value.substring(
+          rotationPrefix.length,
+        ),
+      )
+      .toSet();
+  final details = detailTexts.join(' ');
   expect(tester.takeException(), isNull);
   expect(
     store.parcels.single.toJson(),
@@ -99,12 +128,16 @@ Future<AdviceSnapshot> inspectAdvice(
   // Machine-readable evidence is captured by --reporter json.
   // ignore: avoid_print
   print(
-    'RECOMMENDATION_AUDIT ${jsonEncode({'scenario': scenario, 'crop': parcel.crop, 'ph': parcel.ph, 'moisture': parcel.moisture, 'nitrogen': parcel.nitrogen, 'phosphorus': parcel.phosphorus, 'potassium': parcel.potassium, 'warning': parcel.warning, 'critical': parcel.critical, 'notice': notice, 'details': details})}',
+    'RECOMMENDATION_AUDIT ${jsonEncode({'scenario': scenario, 'crop': parcel.crop, 'ph': parcel.ph, 'moisture': parcel.moisture, 'nitrogen': parcel.nitrogen, 'phosphorus': parcel.phosphorus, 'potassium': parcel.potassium, 'warning': parcel.warning, 'critical': parcel.critical, 'notice': notice, 'details': details, 'issueIds': issueIds.toList(), 'validRotationIds': validRotationIds.toList()})}',
   );
-  return AdviceSnapshot(notice, details);
+  return AdviceSnapshot(notice, details, issueIds, validRotationIds);
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(() async {
+    await AgronomyCatalog.load(bundle: _AuditAssetBundle());
+  });
   setUp(() {
     SharedPreferencesAsyncPlatform.instance =
         InMemorySharedPreferencesAsync.empty();
@@ -123,7 +156,8 @@ void main() {
       healthy.copyWith(ph: 5.3),
       'pH bajo',
     );
-    expect(advice.notice.toLowerCase(), contains('ph está muy bajo'));
+    expect(advice.notice.toLowerCase(), matches(RegExp(r'ph.*(bajo|ácido)')));
+    expect(advice.issueIds, contains('S006'));
   });
   testWidgets('pH alto: informa el problema', (tester) async {
     final advice = await inspectAdvice(
@@ -131,7 +165,11 @@ void main() {
       healthy.copyWith(ph: 8),
       'pH alto',
     );
-    expect(advice.notice.toLowerCase(), contains('ph está alto'));
+    expect(
+      advice.notice.toLowerCase(),
+      matches(RegExp(r'ph.*(alto|alcalino)')),
+    );
+    expect(advice.issueIds, contains('S004'));
   });
   testWidgets('humedad baja: informa el problema', (tester) async {
     final advice = await inspectAdvice(
@@ -139,7 +177,8 @@ void main() {
       healthy.copyWith(moisture: 35),
       'humedad baja',
     );
-    expect(advice.notice.toLowerCase(), contains('humedad es baja'));
+    expect(advice.notice.toLowerCase(), matches(RegExp(r'humedad.*baja')));
+    expect(advice.issueIds, contains('demo-moisture'));
   });
   testWidgets('suelo saludable: no inventa un déficit', (tester) async {
     final advice = await inspectAdvice(
@@ -148,6 +187,7 @@ void main() {
       'condiciones saludables',
     );
     expect(advice.notice, isEmpty);
+    expect(advice.issueIds, isEmpty);
     expect(advice.details, isNotEmpty);
   });
   for (final ph in [5.8, 7.5]) {
@@ -165,6 +205,7 @@ void main() {
         reason:
             'N, P y K están en 70; un aviso de pH no debe atribuirse a nutrientes bajos',
       );
+      expect(advice.issueIds.intersection({'S008', 'S009', 'S010'}), isEmpty);
     });
   }
   for (final nutrient in ['nitrógeno', 'fósforo', 'potasio']) {
@@ -186,6 +227,14 @@ void main() {
         contains(nutrient),
         reason:
             'La recomendación debe identificar el nutriente deficiente, no solo el promedio NPK',
+      );
+      expect(
+        advice.issueIds,
+        contains(switch (nutrient) {
+          'nitrógeno' => 'S009',
+          'fósforo' => 'S008',
+          _ => 'S010',
+        }),
       );
     });
   }
@@ -214,6 +263,10 @@ void main() {
       ),
       reason: 'Un problema de pH no debe ocultar los otros cuatro problemas',
     );
+    expect(
+      advice.issueIds,
+      containsAll({'S006', 'demo-moisture', 'S009', 'S008', 'S010'}),
+    );
   });
   testWidgets('pH normal y N bajo: no ordena corregir el pH', (tester) async {
     final advice = await inspectAdvice(
@@ -241,12 +294,53 @@ void main() {
       'rotación desde Papa',
     );
     expect(
-      potato.details,
-      isNot(
-        matches(RegExp(r'\bconsidera\s+[^,.]*\bpapa\b', caseSensitive: false)),
-      ),
+      potato.validRotationIds,
+      isNot(contains('C002')),
       reason:
           'No debe incluir Papa en la propuesta de siguientes cultivos cuando el cultivo actual ya es Papa',
     );
+    expect(
+      potato.validRotationIds,
+      contains('C003'),
+      reason:
+          'Debe ofrecer una alternativa válida de otra familia, no ocultar todas las opciones',
+    );
+    final blocked = find.byKey(
+      const PageStorageKey('blocked-rotations-demo-1'),
+    );
+    expect(blocked, findsOneWidget);
+    final blockedHeader = find.descendant(
+      of: blocked,
+      matching: find.textContaining('Opciones no recomendadas'),
+    );
+    // The complete card is one lazy-list child, so scrollUntilVisible can stop
+    // as soon as that child exists even though this nested heading is far below
+    // the viewport. Exercise actual scrolling until the heading receives taps.
+    for (
+      var i = 0;
+      i < 50 && blockedHeader.hitTestable().evaluate().isEmpty;
+      i++
+    ) {
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -400));
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+    expect(blockedHeader.hitTestable(), findsOneWidget);
+    await tester.tap(blockedHeader.hitTestable());
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(
+      find.descendant(of: blocked, matching: find.text('Papa')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: blocked,
+        matching: find.textContaining(
+          'Es el mismo cultivo actual; no es una rotación.',
+        ),
+      ),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
   });
 }

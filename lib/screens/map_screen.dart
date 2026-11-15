@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../app/app_theme.dart';
 import '../app/ui.dart';
 import '../data/models.dart';
+import '../data/agronomy_catalog.dart';
 import '../data/terra_store.dart';
 import 'mapbox_parcel_map.dart';
 
@@ -20,6 +21,13 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
+  Color parcelColor(Parcel parcel) => parcel.critical
+      ? const Color(0xFFE58A4D)
+      : parcel.hasOnlyMissingSoilData
+      ? muted
+      : parcel.warning
+      ? const Color(0xFFD8A13D)
+      : green;
   static const _mapboxToken = String.fromEnvironment('MAPBOX_ACCESS_TOKEN');
 
   final controller = MapController();
@@ -139,6 +147,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _parcelDialog({Parcel? parcel, List<LatLng>? points}) async {
+    final catalog = await AgronomyCatalog.load();
+    if (!mounted) return;
     final name = TextEditingController(text: parcel?.name ?? '');
     String crop = parcel?.crop ?? 'Maíz';
     final store = context.read<TerraStore>();
@@ -162,15 +172,11 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                 initialValue: crop,
                 decoration: const InputDecoration(labelText: 'Cultivo'),
                 items:
-                    [
-                          'Maíz',
-                          'Papa',
-                          'Quinua',
-                          'Café',
-                          'Arroz',
-                          'Palta',
-                          'Tomate',
-                        ]
+                    <String>{
+                          for (final profile in catalog.crops) profile.name,
+                          crop,
+                        }
+                        .toList()
                         .map((e) => DropdownMenuItem(value: e, child: Text(e)))
                         .toList(),
                 onChanged: (value) =>
@@ -333,24 +339,16 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                               for (final parcel in store.parcels)
                                 Polygon(
                                   points: animatedPoints(parcel),
-                                  color:
-                                      (parcel.critical
-                                              ? const Color(0xFFEF9B62)
-                                              : green)
-                                          .withValues(
-                                            alpha:
-                                                (parcel.id == selectedId
-                                                    ? .42
-                                                    : .25) *
-                                                (parcel.id == newParcelId
-                                                    ? placement.value
-                                                    : 1),
-                                          ),
+                                  color: parcelColor(parcel).withValues(
+                                    alpha:
+                                        (parcel.id == selectedId ? .42 : .25) *
+                                        (parcel.id == newParcelId
+                                            ? placement.value
+                                            : 1),
+                                  ),
                                   borderColor: parcel.id == selectedId
                                       ? blue
-                                      : (parcel.critical
-                                            ? const Color(0xFFE58A4D)
-                                            : green),
+                                      : parcelColor(parcel),
                                   borderStrokeWidth: parcel.id == selectedId
                                       ? 4 + 2 * math.sin(math.pi * pulse.value)
                                       : 2,
@@ -519,13 +517,13 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                 ),
                               ),
                               MetricPill(
-                                icon: selected.critical
+                                icon: selected.hasOnlyMissingSoilData
+                                    ? Icons.help_outline
+                                    : selected.warning
                                     ? Icons.warning_amber_rounded
                                     : Icons.check_circle_outline,
                                 label: selected.status,
-                                color: selected.critical
-                                    ? Colors.orange
-                                    : green,
+                                color: parcelColor(selected),
                               ),
                             ],
                           ),

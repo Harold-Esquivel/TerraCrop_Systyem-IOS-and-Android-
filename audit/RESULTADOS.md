@@ -1,5 +1,15 @@
 # Resultado de la auditoría de recomendaciones
 
+## Actualización tras integrar el Excel
+
+La implementación basada en `TerraCrop_base para app.xlsx` corrige los ocho fallos descritos más abajo. Las **12 pruebas de aceptación ahora pasan**: se detectan déficits individuales y simultáneos, se evita atribuirlos falsamente al pH y Papa queda descartada como rotación de sí misma. La auditoría mantiene las expectativas de negocio y utiliza los identificadores de los nuevos componentes para leer los resultados.
+
+El diagnóstico distingue índices de demostración de análisis de laboratorio; no transforma referencias de kg/ha en lecturas. La matriz de 169 pares, las familias, el historial y las restricciones de pH/CE determinan las opciones y sus condiciones. La eficacia agronómica local sigue requiriendo validación y los datos faltantes no se dan por confirmados.
+
+La sección siguiente conserva el resultado histórico para documentar qué estaba pendiente antes de incorporar la base.
+
+## Resultado histórico anterior al Excel
+
 Fecha: 15 de noviembre de 2026. Implementación auditada: `74fdffa`.
 
 **La función solicitada no está completa.** Hay avisos básicos, pero no un diagnóstico individual de N/P/K ni un motor de rotación adaptado al cultivo.

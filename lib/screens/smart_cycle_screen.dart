@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../app/app_theme.dart';
 import '../app/ui.dart';
 import '../data/crop_simulation.dart';
+import '../data/agronomy_catalog.dart';
 import '../data/models.dart';
 import '../data/terra_store.dart';
 
@@ -29,11 +30,14 @@ class _SmartCycleScreenState extends State<SmartCycleScreen> {
         parcels.where((p) => p.id == selectedId).firstOrNull ??
         parcels.firstOrNull;
     final current = draft?.id == selected?.id ? draft : selected;
+    final reference = current == null
+        ? null
+        : AgronomyCatalog.current?.findCrop(current.crop);
     final result = current == null
         ? null
         : CropSimulation.run(
             SimulationInput(
-              parcel: current,
+              parcel: current.copyWith(clearSoilAnalysis: true),
               events: events,
               intensity: intensity,
               days: days,
@@ -99,6 +103,19 @@ class _SmartCycleScreenState extends State<SmartCycleScreen> {
                   }),
                 ),
                 const SizedBox(height: 18),
+                if (reference != null) ...[
+                  _referenceProfile(reference),
+                  const SizedBox(height: 14),
+                ],
+                if (current.soilAnalysis != null) ...[
+                  const SurfaceCard(
+                    child: Text(
+                      'Los análisis de suelo se interpretan en Cultivos. Este simulador utiliza índices de demostración independientes; no transforma las necesidades en kg/ha de la ficha en lecturas de sensores.',
+                      style: TextStyle(fontSize: 12, height: 1.5),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                ],
                 SurfaceCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -369,6 +386,38 @@ class _SmartCycleScreenState extends State<SmartCycleScreen> {
       ],
     );
   }
+
+  Widget _referenceProfile(CropProfile profile) => SurfaceCard(
+    child: ExpansionTile(
+      key: PageStorageKey('cycle-workbook-${profile.id}'),
+      tilePadding: EdgeInsets.zero,
+      title: const Text('Referencia del Excel'),
+      subtitle: Text('${profile.name} · ${profile.classification}'),
+      children: [
+        Text(
+          'Base regional: La Joya, Arequipa. pH ${profile.phMin}–${profile.phMax}.',
+          style: const TextStyle(fontSize: 12, height: 1.5),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          profile.periodMin == null || profile.periodMax == null
+              ? 'No se define un ciclo por campaña para este cultivo perenne; el plazo hasta el siguiente corte debe indicarse localmente.'
+              : 'Ciclo completo de referencia: ${profile.periodMin!.round()}–${profile.periodMax!.round()} días. El horizonte del simulador es de hasta 60 días desde el estado actual.',
+          style: const TextStyle(fontSize: 12, height: 1.5),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Demanda del cultivo: ${profile.waterMin}–${profile.waterMax} ${profile.waterUnit}. No equivale al riego aplicado ni a un ahorro garantizado.',
+          style: const TextStyle(fontSize: 12, height: 1.5),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          profile.validation,
+          style: const TextStyle(fontSize: 11, color: muted, height: 1.5),
+        ),
+      ],
+    ),
+  );
 
   Widget _eventChips({required bool climate}) => Wrap(
     spacing: 7,

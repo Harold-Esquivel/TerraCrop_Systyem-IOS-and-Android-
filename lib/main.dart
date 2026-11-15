@@ -7,9 +7,11 @@ import 'app/entry_screen.dart';
 import 'data/terra_store.dart';
 import 'data/alert_service.dart';
 import 'data/cloud_service.dart';
+import 'data/agronomy_catalog.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AgronomyCatalog.load();
   const mapboxToken = String.fromEnvironment('MAPBOX_ACCESS_TOKEN');
   if (mapboxToken.isNotEmpty) MapboxOptions.setAccessToken(mapboxToken);
   await CloudService.instance.initialize();

@@ -231,6 +231,10 @@ class _MapboxParcelMapState extends State<MapboxParcelMap> {
           ? blue
           : parcel.critical
           ? const Color(0xFFE58A4D)
+          : parcel.hasOnlyMissingSoilData
+          ? muted
+          : parcel.warning
+          ? const Color(0xFFD8A13D)
           : green;
       polygonOptions.add(
         PolygonAnnotationOptions(

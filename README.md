@@ -37,7 +37,7 @@ La barra inferior sigue este orden y abre **Mi perfil** al iniciar:
 
 1. **Mi perfil:** nombre editable, racha diaria, actividad y botón **Dispositivos**, que abre los sensores y equipos por parcela con su conexión y batería.
 2. **Smart-Cycle:** simulador por parcela con sequía, calor, lluvia intensa, helada, riego, fertilización y plagas combinables. Permite ajustar intensidad, condiciones iniciales, horizonte de 1 a 60 días y días que faltan para cosechar. Compara el escenario con una referencia sin eventos, muestra gráficas, estadísticas de condición, humedad y merma potencial, y calcula cuándo se alcanza el umbral de deterioro del modelo, incluidos días adicionales en la parcela.
-3. **Cultivos:** pH, humedad, nutrientes, estado, alertas y recomendaciones orientativas.
+3. **Cultivos:** diagnóstico simultáneo de pH, humedad y N/P/K; análisis de suelo opcional; historial de campañas; rotaciones por compatibilidad, familia, pH y salinidad; fichas, secuencias, microorganismos y fuentes del Excel.
 4. **Smart-Market:** tienda ficticia de seis sensores del archivo **Resumen de Sensores Agrícolas**, con búsqueda, filtros, fichas, carrito y pedido de demostración sin cobros ni envíos. Mantiene soles y dólares separados: SEN0193 S/37, DS18B20 S/20, SHT31 S/30, SEN0161-V2 S/250, DFR0300 US$69.90 y SEN0604 US$69 por importación. La referencia local del SEN0604, S/390, se muestra agotada. Son referencias del archivo, no cotizaciones ni stock en vivo.
 5. **MAPA:** mapa satelital Mapbox en Android/iOS con token, parcelas persistentes, edición de vértices, vista 2D/3D, selección, creación y eliminación. Sin token usa OpenStreetMap.
 
@@ -45,7 +45,13 @@ Smart-Cycle sustituye la pantalla manual Modo prueba. Sus escenarios se conserva
 
 El simulador usa reglas y perfiles de cultivo ficticios sin calibración de campo, intensidad constante y una fecha de cosecha introducida por el usuario. No usa clima real ni predice rendimiento comercial; los porcentajes de merma son indicadores didácticos. Su umbral (condición menor de 60/100 o merma potencial de al menos 15%) no garantiza un tiempo seguro de permanencia ni conservación del cultivo.
 
-Las recomendaciones son reglas de demostración basadas en umbrales. Antes de tomar una decisión agronómica, confirma los valores con un análisis de suelo y asesoría local.
+La base regional está en `assets/data/agronomy.json`, generada del Excel original conservado en `data/agronomy/`. Incluye 13 cultivos, 169 compatibilidades, tres secuencias, 13 reglas de suelo, nueve grupos de microorganismos y 16 referencias. Para reproducir la importación, ejecuta `python3 tools/import_agronomy.py`. Las fórmulas se conservan como texto con su resultado cacheado; no se ejecutan. La clasificación y las advertencias son las del archivo, no una verificación independiente de todas sus fuentes.
+
+Sin análisis registrado, la app identifica explícitamente sus pH, humedad e índices N/P/K como datos de demostración. El editor de análisis permite pH, CE del extracto saturado en dS/m, materia orgánica y el diagnóstico cualitativo de cada nutriente. Los campos vacíos permanecen desconocidos: no se reemplazan por valores de prueba ni se consideran saludables. Los requerimientos de N/P₂O₅/K₂O en kg/ha son referencias de fertilización por campaña, no concentraciones medidas ni dosis calculadas.
+
+Las rotaciones excluyen el cultivo actual y su familia, revisan de forma conservadora las tres campañas anteriores registradas y explican cada descarte. Los cultivos potenciales mantienen esa clasificación; arroz queda fuera del piloto. Si falta información, las opciones quedan condicionadas a verificarla. Registrar una siembra requiere confirmación y añade el cultivo anterior al historial, incluso si repite una campaña anterior. Consultar una opción o simular no cambia el cultivo real.
+
+La demanda hídrica es demanda del cultivo, no riego aplicado ni ahorro garantizado. Alfalfa conserva su referencia anual y sus periodos de campaña desconocidos. Smart-Cycle muestra estas fichas como contexto, pero mantiene un modelo didáctico sin calibración de campo. Antes de intervenir, confirma el análisis y la pertinencia local de las recomendaciones.
 
 ## Firebase opcional: nube y push remoto
 

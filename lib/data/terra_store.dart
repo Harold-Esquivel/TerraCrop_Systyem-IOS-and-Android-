@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'cloud_service.dart';
 import 'models.dart';
+import 'agronomy_catalog.dart';
 
 class TerraStore extends ChangeNotifier {
   static const _key = 'terracrop_data_v1';
@@ -104,6 +105,16 @@ class TerraStore extends ChangeNotifier {
   }
 
   Future<void> updateParcel(Parcel parcel) {
+    String cropKey(String name) =>
+        AgronomyCatalog.current?.findCrop(name)?.id ??
+        AgronomyCatalog.normalizeName(name);
+    final previous = parcels.where((p) => p.id == parcel.id).firstOrNull;
+    if (previous != null && cropKey(previous.crop) != cropKey(parcel.crop)) {
+      // History excludes the current campaign. Repeated crop names represent
+      // distinct campaigns and must not be deduplicated.
+      final history = [...parcel.cropHistory, previous.crop];
+      parcel = parcel.copyWith(cropHistory: history);
+    }
     parcels = [
       for (final current in parcels)
         if (current.id == parcel.id) parcel else current,
