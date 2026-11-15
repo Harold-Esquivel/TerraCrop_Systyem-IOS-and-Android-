@@ -78,6 +78,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/data/agronomy.json
+    - assets/data/environment.json
     - assets/fonts/
     - assets/images/Gemini_Generated_Image_uamzuamzuamzuamz-removebg-preview.png
 

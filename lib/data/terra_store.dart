@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'cloud_service.dart';
 import 'models.dart';
 import 'agronomy_catalog.dart';
+import 'campaign_engine.dart';
 
 class TerraStore extends ChangeNotifier {
   static const _key = 'terracrop_data_v1';
@@ -18,6 +19,12 @@ class TerraStore extends ChangeNotifier {
   DateTime? lastVisit;
   int revision = 0;
   Future<void> _pendingSave = Future.value();
+  CampaignEvaluation? campaignContext;
+
+  void useCampaignContext(CampaignEvaluation evaluation) {
+    campaignContext = evaluation;
+    notifyListeners();
+  }
 
   Future<void> load() async {
     try {

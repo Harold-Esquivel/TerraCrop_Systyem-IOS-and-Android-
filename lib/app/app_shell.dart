@@ -84,7 +84,7 @@ class _AppShellState extends State<AppShell>
   Widget build(BuildContext context) {
     final pages = [
       const ProfileScreen(),
-      const SmartCycleScreen(),
+      SmartCycleScreen(onOpenMarket: () => select(3)),
       const CropsScreen(),
       const SmartMarketScreen(),
       const MapScreen(),

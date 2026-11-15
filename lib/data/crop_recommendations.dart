@@ -1,5 +1,6 @@
 import 'agronomy_catalog.dart';
 import 'models.dart';
+import 'soil_rule_engine.dart';
 
 enum RecommendationSeverity { info, warning, critical }
 
@@ -120,7 +121,7 @@ class CropRecommendationEngine {
             0,
             double.maxFinite,
           );
-    final organicMatter = demo
+    final _ = demo
         ? null
         : reading(analysis.organicMatter, 'materia orgánica en %', 0, 100);
     NutrientLevel nutrient(NutrientLevel? measured, double index, String name) {
@@ -150,6 +151,20 @@ class CropRecommendationEngine {
     final moisture = demo
         ? reading(parcel.moisture, 'humedad de demostración', 0, 100)
         : null;
+    final evaluatedRules = SoilRuleEngine(catalog).evaluate(
+      demo
+          ? SoilAnalysis(
+              ph: ph,
+              nitrogen: nitrogen,
+              phosphorus: phosphorus,
+              potassium: potassium,
+            )
+          : analysis,
+    );
+    final triggered = evaluatedRules
+        .where((e) => e.state == RuleState.triggered)
+        .map((e) => e.rule.id)
+        .toSet();
     final issues = <SoilIssue>[];
     List<String> microbes(List<String> ids) => ids.where((id) {
       if (!catalog.microorganisms.any((m) => m.id == id)) return false;
@@ -253,14 +268,14 @@ class CropRecommendationEngine {
     }
 
     if (ph != null) {
-      if (ph >= 8.5) {
+      if (triggered.contains('S003')) {
         rule('S003', 'pH muy alto', severity: RecommendationSeverity.critical);
-      } else if (ph >= 7.5) {
+      } else if (triggered.contains('S004')) {
         rule('S004', 'pH alcalino o en el límite alcalino');
         notes.add(
           'Convención de límites: a pH 7.5 se muestra S004; a pH 8.5 se muestra S003. Los intervalos contiguos del Excel se solapan en esos puntos.',
         );
-      } else if (ph < 5.5) {
+      } else if (triggered.contains('S006')) {
         rule(
           'S006',
           'pH bajo: suelo ácido',
@@ -281,7 +296,7 @@ class CropRecommendationEngine {
             isDemo: demo,
           ),
         );
-      } else if (ph >= 6 && ph < 7.5) {
+      } else if (triggered.contains('S005')) {
         final adequate = catalog.soilRules
             .where((r) => r.id == 'S005')
             .firstOrNull;
@@ -291,13 +306,13 @@ class CropRecommendationEngine {
       }
     }
     if (ec != null) {
-      if (ec >= 4) {
+      if (triggered.contains('S001')) {
         rule(
           'S001',
           'Salinidad del suelo alta',
           severity: RecommendationSeverity.critical,
         );
-      } else if (ec >= 2) {
+      } else if (triggered.contains('S002')) {
         rule('S002', 'Salinidad ligera');
       }
       if (profile?.ecThreshold != null && ec >= profile!.ecThreshold!) {
@@ -316,10 +331,10 @@ class CropRecommendationEngine {
         );
       }
     }
-    if (organicMatter != null && organicMatter < 2) {
+    if (triggered.contains('S007')) {
       rule('S007', 'Materia orgánica baja');
     }
-    if (nitrogen == NutrientLevel.low) {
+    if (triggered.contains('S009')) {
       rule(
         'S009',
         'Nitrógeno bajo',
@@ -328,7 +343,7 @@ class CropRecommendationEngine {
             : RecommendationSeverity.warning,
       );
     }
-    if (phosphorus == NutrientLevel.low) {
+    if (triggered.contains('S008')) {
       rule(
         'S008',
         'Fósforo disponible bajo',
@@ -337,7 +352,7 @@ class CropRecommendationEngine {
             : RecommendationSeverity.warning,
       );
     }
-    if (potassium == NutrientLevel.low) {
+    if (triggered.contains('S010')) {
       rule(
         'S010',
         'Potasio bajo',
@@ -384,7 +399,7 @@ class CropRecommendationEngine {
       );
     }
     if (!demo) {
-      if (analysis.moistureLow == true && analysis.sandySoil == true) {
+      if (triggered.contains('S011')) {
         rule('S011', 'Humedad baja en suelo arenoso');
       } else if (analysis.moistureLow == true) {
         issues.add(
@@ -406,13 +421,13 @@ class CropRecommendationEngine {
       if (analysis.sandySoil == null) {
         missing.add('Falta confirmar la textura arenosa del suelo.');
       }
-      if (analysis.waterlogged == true) {
+      if (triggered.contains('S012')) {
         rule('S012', 'Encharcamiento o napa superficial');
       }
       if (analysis.waterlogged == null) {
         missing.add('Falta confirmar el drenaje o encharcamiento.');
       }
-      if (analysis.soilDiseaseHistory == true) {
+      if (triggered.contains('S013')) {
         rule('S013', 'Antecedentes de enfermedades de suelo');
       }
       if (analysis.soilDiseaseHistory == null) {

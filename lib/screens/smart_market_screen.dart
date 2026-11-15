@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../app/app_theme.dart';
 import '../app/ui.dart';
 import '../data/market_catalog.dart';
+import '../data/terra_store.dart';
+import 'market_advice_panel.dart';
 
 class SmartMarketScreen extends StatefulWidget {
   const SmartMarketScreen({super.key});
@@ -63,6 +66,11 @@ class _SmartMarketScreenState extends State<SmartMarketScreen> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(22, 0, 22, 25),
             children: [
+              if (context.watch<TerraStore?>()?.campaignContext
+                  case final evaluation?) ...[
+                MarketAdvicePanel(evaluation: evaluation),
+                const SizedBox(height: 20),
+              ],
               SurfaceCard(
                 color: context.colors.softBlue,
                 child: Row(

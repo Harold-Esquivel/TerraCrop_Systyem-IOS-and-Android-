@@ -8,11 +8,13 @@ import '../data/models.dart';
 import '../data/simulation_report.dart';
 import '../data/terra_store.dart';
 import 'smart_cycle_results_screen.dart';
+import 'campaign_screen.dart';
 
 export 'smart_cycle_results_screen.dart' show SmartCycleResultsScreen;
 
 class SmartCycleScreen extends StatefulWidget {
-  const SmartCycleScreen({super.key});
+  const SmartCycleScreen({super.key, this.onOpenMarket});
+  final VoidCallback? onOpenMarket;
   @override
   State<SmartCycleScreen> createState() => _SmartCycleScreenState();
 }
@@ -78,6 +80,38 @@ class _SmartCycleScreenState extends State<SmartCycleScreen> {
             key: const PageStorageKey('smart-cycle-scroll'),
             padding: const EdgeInsets.fromLTRB(22, 0, 22, 25),
             children: [
+              SurfaceCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Planifica tu próxima campaña',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Compara cultivos, fechas, suelo y clima histórico de La Joya con criterios explicables.',
+                    ),
+                    const SizedBox(height: 10),
+                    FilledButton.icon(
+                      key: const Key('cycle-plan-campaign'),
+                      onPressed: () => Navigator.of(context).push<void>(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              CampaignScreen(onOpenMarket: widget.onOpenMarket),
+                        ),
+                      ),
+                      icon: const Icon(Icons.calendar_month),
+                      label: const Text('Planificar campaña'),
+                    ),
+                    const Text(
+                      'El simulador de eventos y sus informes siguen disponibles debajo.',
+                      style: TextStyle(fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
               SurfaceCard(
                 color: context.colors.softBlue,
                 child: Row(
