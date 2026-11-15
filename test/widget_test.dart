@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 import 'package:terracrop/data/models.dart';
+import 'package:terracrop/data/agronomy_catalog.dart';
 import 'package:terracrop/data/terra_store.dart';
 import 'package:terracrop/main.dart';
 import 'package:terracrop/app/app_shell.dart';
@@ -21,6 +22,8 @@ Widget shellWith(TerraStore store) => ChangeNotifierProvider.value(
 );
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(() async => AgronomyCatalog.load());
   test('una parcela crítica conserva sus datos al serializar', () {
     final original = demoParcels()[1];
     final restored = Parcel.fromJson(original.toJson());
@@ -176,13 +179,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
     expect(tester.takeException(), isNull);
     expect(find.text('Estadística por día'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.text('Cómo se calcula'),
-      250,
-      scrollable: scrollable,
-    );
-    await tester.tap(find.text('Cómo se calcula'));
-    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('Cómo se calcula'), findsNothing);
+    expect(find.byKey(const Key('cycle-save-report')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

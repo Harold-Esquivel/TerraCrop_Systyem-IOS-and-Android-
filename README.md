@@ -38,7 +38,7 @@ La identidad visual combina blanco, verde y azul: tarjetas claras, acentos verde
 La barra inferior sigue este orden y abre **Mi perfil** al iniciar:
 
 1. **Mi perfil:** nombre editable, racha diaria, actividad y botón **Dispositivos**, que abre los sensores y equipos por parcela con su conexión y batería. Un botón de luna a la derecha, sobre la barra de módulos, activa el modo oscuro; cambia a sol para volver al modo claro. La elección se guarda localmente y se aplica a todas las pantallas, ventanas y formularios.
-2. **Smart-Cycle:** simulador por parcela con sequía, calor, lluvia intensa, helada, riego, fertilización y plagas combinables. Permite ajustar intensidad, condiciones iniciales, horizonte de 1 a 60 días y días que faltan para cosechar. El botón **Ver el resultado** abre una carga de tres segundos con la misma animación de plantas del inicio de sesión. Después muestra los eventos elegidos, la comparación con una referencia sin eventos, gráficas y estadísticas. **Cambiar escenario** permite volver y generar otra simulación. Volver durante la carga cancela la apertura del resultado.
+2. **Smart-Cycle:** permite elegir una, varias o todas las parcelas, combinar eventos climáticos y agrícolas, ajustar intensidad y horizonte, y definir cosecha y condiciones independientes por parcela. **Ver el resultado** mantiene la carga de tres segundos. El informe reúne resultados, cuidados según los datos registrados y acciones condicionales ante el escenario; el PDF se guarda mediante el selector nativo de archivos. Las fórmulas y explicaciones del cálculo quedan fuera de la interfaz y del documento. [Formato, límites y verificación](docs/SIMULATION_REPORTS.md).
 3. **Cultivos:** cuidados puntuales por parcela con tres acciones prioritarias y acceso opcional al resto. Resume riego, materia orgánica, nutrientes, pH, salinidad y drenaje según los datos ingresados. El análisis y el historial se editan por parcela; la próxima siembra se consulta en una ventana aparte con opciones filtradas por compatibilidad, familia, pH y salinidad. Las referencias al Excel y la biblioteca técnica no se muestran en la interfaz.
 4. **Smart-Market:** tienda ficticia de seis sensores del archivo **Resumen de Sensores Agrícolas**, con búsqueda, filtros, fichas, carrito y pedido de demostración sin cobros ni envíos. Mantiene soles y dólares separados: SEN0193 S/37, DS18B20 S/20, SHT31 S/30, SEN0161-V2 S/250, DFR0300 US$69.90 y SEN0604 US$69 por importación. La referencia local del SEN0604, S/390, se muestra agotada. Son referencias del archivo, no cotizaciones ni stock en vivo.
 5. **MAPA:** mapa satelital Mapbox en Android/iOS con token, parcelas persistentes, edición de vértices, vista 2D/3D, selección, creación y eliminación. Sin token usa OpenStreetMap.
@@ -76,7 +76,7 @@ La cuenta anónima conserva su identidad en la instalación actual. Para recuper
 
 ## Distribución Android
 
-La versión actual es **1.2.1+5**, con API mínima 24. Para compartir en teléfonos, utiliza un APK release. Se verificó la instalación del release anterior y su actualización al nuevo en Android 15 ARM64 virtual; esto no determina la causa del fallo reportado en teléfonos físicos enviados por WhatsApp. La evidencia y los límites están en [docs/ANDROID_INSTALLATION.md](docs/ANDROID_INSTALLATION.md).
+La versión actual es **1.3.0+6**, con API mínima 24. Para compartir en teléfonos, utiliza un APK release. Se verificó la instalación del release anterior y su actualización al nuevo en Android 15 ARM64 virtual; esto no determina la causa del fallo reportado en teléfonos físicos enviados por WhatsApp. La evidencia y los límites están en [docs/ANDROID_INSTALLATION.md](docs/ANDROID_INSTALLATION.md).
 
 La compilación universal cubre ARM32, ARM64 y x86_64. Para un teléfono ARM64 puede generarse un archivo más pequeño sin cambiar el código de versión:
 
@@ -94,7 +94,7 @@ flutter test
 flutter build apk --debug
 ```
 
-La suite incluye 95 pruebas unitarias y de interfaz para los datos agrícolas y las funciones de la app, más las 12 pruebas de aceptación de `audit/`. La prueba nativa aislada de Android verifica el catálogo, los cuidados resumidos en modo claro y oscuro, el análisis parcial, la rotación y el historial con datos en memoria:
+La suite incluye 105 pruebas unitarias y de interfaz para los datos agrícolas y las funciones de la app, más las 12 pruebas de aceptación de `audit/`. La prueba nativa aislada de Android verifica el catálogo, los cuidados resumidos en modo claro y oscuro, el análisis parcial, la rotación y el historial con datos en memoria:
 
 ```sh
 flutter test audit/crop_recommendations_audit_test.dart

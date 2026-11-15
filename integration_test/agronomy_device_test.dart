@@ -9,7 +9,6 @@ import 'package:terracrop/data/cloud_service.dart';
 import 'package:terracrop/data/models.dart';
 import 'package:terracrop/data/terra_store.dart';
 import 'package:terracrop/main.dart';
-import 'package:terracrop/screens/soil_analysis_editor.dart';
 
 Future<void> waitFor(WidgetTester tester, Finder finder) async {
   final deadline = DateTime.now().add(const Duration(seconds: 20));
