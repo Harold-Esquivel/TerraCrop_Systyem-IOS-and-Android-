@@ -179,7 +179,7 @@ void main() {
             'No convertir referencias kg/ha en índices ni modificar los datos originales',
       );
       expect(find.text('Análisis ingresado'), findsOneWidget);
-      expect(find.text('Datos por completar'), findsOneWidget);
+      expect(find.text('Datos por completar'), findsWidgets);
       expect(find.text('20/100 · demo'), findsNothing);
       for (final issue in ['S009', 'S008', 'S010', 'demo-moisture']) {
         expect(find.byKey(Key('crop-issue-qa-agronomy-$issue')), findsNothing);

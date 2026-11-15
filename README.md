@@ -72,6 +72,18 @@ En web, agrega `--dart-define=FIREBASE_VAPID_KEY=...` y configura el service wor
 
 La cuenta anónima conserva su identidad en la instalación actual. Para recuperar los mismos datos tras reinstalar o en otro teléfono, se necesitaría vincular una cuenta real; ese flujo no forma parte del modo prueba.
 
+## Distribución Android
+
+La versión actual es **1.1.0+2**, con API mínima 24. Para compartir en teléfonos, utiliza un APK release. Se verificó la instalación del release anterior y su actualización al nuevo en Android 15 ARM64 virtual; esto no determina la causa del fallo reportado en teléfonos físicos enviados por WhatsApp. La evidencia y los límites están en [docs/ANDROID_INSTALLATION.md](docs/ANDROID_INSTALLATION.md).
+
+La compilación universal cubre ARM32, ARM64 y x86_64. Para un teléfono ARM64 puede generarse un archivo más pequeño sin cambiar el código de versión:
+
+```sh
+flutter build apk --release --target-platform android-arm64 --dart-define-from-file=mapbox.defines.json
+```
+
+Esta compilación reemplaza `app-release.apk`: guárdala con un nombre que indique su arquitectura antes de generar otra. La firma actual es la clave local de pruebas; no debe cambiarse al actualizar una instalación existente.
+
 ## Verificación
 
 ```sh
@@ -79,6 +91,15 @@ flutter analyze
 flutter test
 flutter build apk --debug
 ```
+
+La integración del Excel está cubierta por 79 pruebas unitarias y de interfaz, más las 12 pruebas de aceptación de `audit/`. La prueba nativa aislada de Android verifica catálogo, déficits combinados, análisis parcial, rotación e historial con datos en memoria:
+
+```sh
+flutter test audit/crop_recommendations_audit_test.dart
+flutter drive --driver=test_driver/agronomy_driver.dart --target=integration_test/agronomy_device_test.dart -d ID_DEL_DISPOSITIVO
+```
+
+Las capturas y el resultado quedan en `build/agronomy-review/`. El original del Excel, la procedencia y las distinciones de unidades se describen en [docs/AGRONOMY_DATA.md](docs/AGRONOMY_DATA.md).
 
 Para compilar con el mapa satelital y el token local configurado:
 
