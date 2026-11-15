@@ -1,0 +1,644 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../app/app_theme.dart';
+import '../app/ui.dart';
+import '../data/crop_simulation.dart';
+import '../data/models.dart';
+import '../data/terra_store.dart';
+
+class SmartCycleScreen extends StatefulWidget {
+  const SmartCycleScreen({super.key});
+
+  @override
+  State<SmartCycleScreen> createState() => _SmartCycleScreenState();
+}
+
+class _SmartCycleScreenState extends State<SmartCycleScreen> {
+  String? selectedId;
+  Parcel? draft;
+  Set<SimulationEvent> events = {SimulationEvent.drought};
+  double intensity = .5;
+  int days = 30;
+  int daysToHarvest = 15;
+
+  @override
+  Widget build(BuildContext context) {
+    final parcels = context.watch<TerraStore>().parcels;
+    final selected =
+        parcels.where((p) => p.id == selectedId).firstOrNull ??
+        parcels.firstOrNull;
+    final current = draft?.id == selected?.id ? draft : selected;
+    final result = current == null
+        ? null
+        : CropSimulation.run(
+            SimulationInput(
+              parcel: current,
+              events: events,
+              intensity: intensity,
+              days: days,
+              daysToHarvest: daysToHarvest,
+            ),
+          );
+    return Column(
+      children: [
+        const PageIntro(
+          eyebrow: 'Explora antes de decidir',
+          title: 'Smart-Cycle',
+          subtitle: 'Simula el clima, las labores y el paso del tiempo',
+        ),
+        Expanded(
+          child: ListView(
+            key: const PageStorageKey('smart-cycle-scroll'),
+            padding: const EdgeInsets.fromLTRB(22, 0, 22, 25),
+            children: [
+              const SurfaceCard(
+                color: paleBlue,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.science_outlined, color: blue),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Simulación de demostración. Las cifras son orientativas y no garantizan una fecha segura de cosecha. Tus parcelas conservan sus datos originales.',
+                        style: TextStyle(fontSize: 12, height: 1.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+              if (selected == null || current == null || result == null)
+                const SurfaceCard(
+                  child: Text(
+                    'Crea una parcela en MAPA para comenzar la simulación.',
+                  ),
+                )
+              else ...[
+                DropdownButtonFormField<String>(
+                  key: ValueKey('cycle-parcel-${selected.id}'),
+                  initialValue: selected.id,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Parcela y cultivo',
+                  ),
+                  items: [
+                    for (final p in parcels)
+                      DropdownMenuItem(
+                        value: p.id,
+                        child: Text(
+                          '${p.name} · ${p.crop}',
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
+                  onChanged: (id) => setState(() {
+                    selectedId = id;
+                    draft = null;
+                  }),
+                ),
+                const SizedBox(height: 18),
+                SurfaceCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '1. Define el escenario',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Eventos climáticos',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 8),
+                      _eventChips(climate: true),
+                      const SizedBox(height: 14),
+                      const Text(
+                        'Eventos agrícolas',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 8),
+                      _eventChips(climate: false),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Puedes combinar eventos. Se aplican cada día con una intensidad constante.',
+                        style: TextStyle(color: muted, fontSize: 12),
+                      ),
+                      _control(
+                        'Intensidad de los eventos',
+                        '${(intensity * 100).round()}%',
+                        intensity,
+                        0,
+                        1,
+                        (v) => setState(() => intensity = v),
+                        key: 'cycle-intensity',
+                      ),
+                      _control(
+                        'Días a simular',
+                        '$days días',
+                        days.toDouble(),
+                        1,
+                        60,
+                        (v) => setState(() => days = v.round()),
+                        key: 'cycle-days',
+                      ),
+                      _control(
+                        'Días que faltan para cosechar',
+                        '$daysToHarvest días',
+                        daysToHarvest.toDouble(),
+                        0,
+                        60,
+                        (v) => setState(() => daysToHarvest = v.round()),
+                        key: 'cycle-harvest',
+                      ),
+                      const Text(
+                        'Este plazo lo defines tú: usa 0 si el cultivo ya está listo para cosechar.',
+                        style: TextStyle(color: muted, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                SurfaceCard(
+                  child: ExpansionTile(
+                    key: const PageStorageKey('cycle-initial-conditions'),
+                    tilePadding: EdgeInsets.zero,
+                    childrenPadding: const EdgeInsets.only(top: 8),
+                    title: const Text(
+                      'Condiciones iniciales',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    subtitle: const Text(
+                      'Ajustes exclusivos de esta simulación',
+                    ),
+                    children: [
+                      _control(
+                        'pH del suelo',
+                        current.ph.toStringAsFixed(1),
+                        current.ph,
+                        3,
+                        9,
+                        (v) => setState(() => draft = current.copyWith(ph: v)),
+                      ),
+                      _control(
+                        'Humedad',
+                        '${current.moisture.round()}%',
+                        current.moisture,
+                        0,
+                        100,
+                        (v) => setState(
+                          () => draft = current.copyWith(moisture: v),
+                        ),
+                      ),
+                      _control(
+                        'Nitrógeno',
+                        '${current.nitrogen.round()}%',
+                        current.nitrogen,
+                        0,
+                        100,
+                        (v) => setState(
+                          () => draft = current.copyWith(nitrogen: v),
+                        ),
+                      ),
+                      _control(
+                        'Fósforo',
+                        '${current.phosphorus.round()}%',
+                        current.phosphorus,
+                        0,
+                        100,
+                        (v) => setState(
+                          () => draft = current.copyWith(phosphorus: v),
+                        ),
+                      ),
+                      _control(
+                        'Potasio',
+                        '${current.potassium.round()}%',
+                        current.potassium,
+                        0,
+                        100,
+                        (v) => setState(
+                          () => draft = current.copyWith(potassium: v),
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: () => setState(() => draft = null),
+                        icon: const Icon(Icons.restart_alt),
+                        label: const Text('Recuperar datos de la parcela'),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  '2. Compara los resultados',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Referencia: mismas condiciones iniciales, sin los eventos seleccionados.',
+                  style: TextStyle(fontSize: 12, color: muted),
+                ),
+                const SizedBox(height: 12),
+                _windowCard(result),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    _metric(
+                      'Condición final',
+                      '${result.finalHealth.toStringAsFixed(0)}/100',
+                      '${result.conditionDifference >= 0 ? '+' : ''}${result.conditionDifference.toStringAsFixed(1)} puntos vs. referencia',
+                      blue,
+                    ),
+                    _metric(
+                      'Merma potencial',
+                      '${result.finalLossPercent.toStringAsFixed(1)}%',
+                      '${result.lossDifference >= 0 ? '+' : ''}${result.lossDifference.toStringAsFixed(1)} puntos porcentuales',
+                      Colors.deepOrange,
+                    ),
+                    _metric(
+                      'Humedad media',
+                      '${result.averageMoisture.toStringAsFixed(1)}%',
+                      'Durante los $days días simulados',
+                      green,
+                    ),
+                    _metric(
+                      'Días extra simulados',
+                      '${result.additionalDaysInParcel}',
+                      'Después de la cosecha prevista',
+                      blue,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                SurfaceCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Evolución de la condición',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 5),
+                      const Text(
+                        'Índice del modelo: 100 es la mejor condición',
+                        style: TextStyle(fontSize: 11, color: muted),
+                      ),
+                      const SizedBox(height: 14),
+                      Semantics(
+                        label:
+                            'Condición del cultivo: escenario ${result.finalHealth.round()} de 100; referencia ${result.baselineFinalHealth.round()} de 100 al día $days.',
+                        child: SizedBox(
+                          height: 190,
+                          width: double.infinity,
+                          child: CustomPaint(
+                            painter: _CycleChart(
+                              result.points,
+                              result.basePoints,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Día 0',
+                            style: TextStyle(fontSize: 11, color: muted),
+                          ),
+                          Text(
+                            'Día $days',
+                            style: const TextStyle(fontSize: 11, color: muted),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      const Wrap(
+                        spacing: 16,
+                        runSpacing: 8,
+                        children: [
+                          _Legend(color: blue, text: 'Escenario'),
+                          _Legend(color: green, text: 'Referencia'),
+                          _Legend(
+                            color: Colors.deepOrange,
+                            text: 'Umbral de condición 60',
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _dailyTable(result),
+                const SizedBox(height: 14),
+                SurfaceCard(
+                  child: ExpansionTile(
+                    key: const PageStorageKey('cycle-calculation-notes'),
+                    tilePadding: EdgeInsets.zero,
+                    title: const Text('Cómo se calcula'),
+                    children: [
+                      const Text(
+                        CropSimulation.methodology,
+                        style: TextStyle(fontSize: 12, height: 1.5),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        result.summary,
+                        style: const TextStyle(fontSize: 12, height: 1.5),
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'Merma potencial es un indicador ficticio del escenario, no una predicción de producción. La ausencia de un umbral en el horizonte simulado no garantiza que el cultivo pueda permanecer ese tiempo en la parcela.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: muted,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _eventChips({required bool climate}) => Wrap(
+    spacing: 7,
+    runSpacing: 5,
+    children: [
+      for (final event in SimulationEvent.values.where(
+        (e) => e.isClimate == climate,
+      ))
+        FilterChip(
+          key: ValueKey('cycle-event-${event.name}'),
+          label: Text(event.label),
+          selected: events.contains(event),
+          onSelected: (selected) => setState(() {
+            events = {...events};
+            if (selected) {
+              events.add(event);
+            } else {
+              events.remove(event);
+            }
+          }),
+        ),
+    ],
+  );
+
+  Widget _control(
+    String label,
+    String value,
+    double current,
+    double min,
+    double max,
+    ValueChanged<double> onChanged, {
+    String? key,
+  }) => Padding(
+    padding: const EdgeInsets.only(top: 14),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            ),
+            Text(
+              value,
+              style: const TextStyle(fontWeight: FontWeight.w800, color: blue),
+            ),
+          ],
+        ),
+        Slider(
+          key: key == null ? null : ValueKey(key),
+          value: current.clamp(min, max),
+          min: min,
+          max: max,
+          divisions: max == 1
+              ? 10
+              : (max - min).round() * (label == 'pH del suelo' ? 10 : 1),
+          label: value,
+          semanticFormatterCallback: (_) => '$label: $value',
+          onChanged: onChanged,
+        ),
+      ],
+    ),
+  );
+
+  Widget _windowCard(SimulationResult result) {
+    final riskDay = result.firstRiskDay;
+    final extra = riskDay == null ? null : riskDay - daysToHarvest - 1;
+    final String message;
+    if (riskDay == 0) {
+      message =
+          'El cultivo ya supera el umbral de deterioro del modelo al inicio.';
+    } else if (riskDay != null && riskDay <= daysToHarvest) {
+      message =
+          'El umbral aparece el día $riskDay, antes o al llegar a la cosecha prevista. El modelo no ofrece margen adicional.';
+    } else if (extra != null) {
+      message =
+          'El umbral aparece el día $riskDay: se proyectan $extra días completos adicionales después de la cosecha prevista antes de alcanzarlo.';
+    } else if (days < daysToHarvest) {
+      message =
+          'El horizonte termina antes de la cosecha prevista. Amplía los días a simular para evaluar la permanencia adicional.';
+    } else {
+      message =
+          'No se alcanza el umbral en $days días, incluidos ${result.additionalDaysInParcel} después de la cosecha prevista. No se estima el comportamiento fuera de este horizonte.';
+    }
+    return SurfaceCard(
+      color: riskDay == null ? paleBlue : const Color(0xFFFFF2E9),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '¿Cuánto tiempo más en la parcela?',
+            style: TextStyle(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            key: const Key('cycle-window-result'),
+            style: const TextStyle(fontSize: 13, height: 1.5),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Umbral: condición menor de 60/100 o merma potencial de al menos 15%. Es un criterio de demostración, no un plazo seguro.',
+            style: TextStyle(fontSize: 11, color: muted, height: 1.4),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _metric(String title, String value, String detail, Color color) =>
+      LayoutBuilder(
+        builder: (context, constraints) => SizedBox(
+          width: constraints.maxWidth > 340
+              ? (constraints.maxWidth - 10) / 2
+              : constraints.maxWidth,
+          child: SurfaceCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontSize: 12, color: muted)),
+                const SizedBox(height: 8),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 27,
+                    fontWeight: FontWeight.w800,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(detail, style: const TextStyle(fontSize: 11, height: 1.4)),
+              ],
+            ),
+          ),
+        ),
+      );
+
+  Widget _dailyTable(SimulationResult result) {
+    final rows = result.points
+        .where(
+          (p) =>
+              p.day == 0 ||
+              p.day % 7 == 0 ||
+              p.day == days ||
+              p.day == daysToHarvest ||
+              p.day == result.firstRiskDay,
+        )
+        .toList();
+    return SurfaceCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Estadística por día',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              columnSpacing: 18,
+              horizontalMargin: 0,
+              columns: const [
+                DataColumn(label: Text('Día')),
+                DataColumn(label: Text('Humedad')),
+                DataColumn(label: Text('Condición')),
+                DataColumn(label: Text('Merma')),
+              ],
+              rows: [
+                for (final point in rows)
+                  DataRow(
+                    cells: [
+                      DataCell(Text('${point.day}')),
+                      DataCell(Text('${point.moisture.toStringAsFixed(0)}%')),
+                      DataCell(Text('${point.health.toStringAsFixed(0)}/100')),
+                      DataCell(
+                        Text('${point.lossPercent.toStringAsFixed(1)}%'),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Legend extends StatelessWidget {
+  const _Legend({required this.color, required this.text});
+  final Color color;
+  final String text;
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        width: 10,
+        height: 10,
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      ),
+      const SizedBox(width: 5),
+      Flexible(child: Text(text, style: const TextStyle(fontSize: 11))),
+    ],
+  );
+}
+
+class _CycleChart extends CustomPainter {
+  const _CycleChart(this.scenario, this.reference);
+  final List<SimulationPoint> scenario;
+  final List<SimulationPoint> reference;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final area = Rect.fromLTWH(30, 8, size.width - 36, size.height - 18);
+    final grid = Paint()
+      ..color = border
+      ..strokeWidth = 1;
+    for (final tick in [0, 20, 40, 60, 80, 100]) {
+      final y = area.bottom - area.height * tick / 100;
+      canvas.drawLine(Offset(area.left, y), Offset(area.right, y), grid);
+      final text = TextPainter(
+        text: TextSpan(
+          text: '$tick',
+          style: const TextStyle(color: muted, fontSize: 10),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      text.paint(canvas, Offset(0, y - 6));
+    }
+    canvas.drawLine(
+      Offset(area.left, area.bottom - area.height * .6),
+      Offset(area.right, area.bottom - area.height * .6),
+      Paint()
+        ..color = Colors.deepOrange.withValues(alpha: .45)
+        ..strokeWidth = 1,
+    );
+    void line(List<SimulationPoint> points, Color color) {
+      if (points.isEmpty) return;
+      final path = Path();
+      for (var i = 0; i < points.length; i++) {
+        final p = points[i];
+        final x =
+            area.left +
+            area.width * p.day / (points.last.day == 0 ? 1 : points.last.day);
+        final y = area.bottom - area.height * p.health / 100;
+        if (i == 0) {
+          path.moveTo(x, y);
+        } else {
+          path.lineTo(x, y);
+        }
+      }
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = color
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.5
+          ..strokeCap = StrokeCap.round,
+      );
+    }
+
+    line(reference, green);
+    line(scenario, blue);
+  }
+
+  @override
+  bool shouldRepaint(covariant _CycleChart oldDelegate) =>
+      oldDelegate.scenario != scenario || oldDelegate.reference != reference;
+}

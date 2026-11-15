@@ -33,11 +33,17 @@ Al abrir la app aparece el logo de TerraCrop, después el nombre con un efecto d
 
 ## Módulos
 
-- **Mapa:** mapa satelital Mapbox en Android/iOS con token, parcelas persistentes, edición de vértices, vista 2D/3D, selección, creación y eliminación. Sin token usa OpenStreetMap.
-- **Mis cultivos:** pH, humedad, nutrientes, estado, alertas y recomendaciones orientativas.
-- **Dispositivos:** cantidad, conexión y batería de equipos demostrativos asociados a cada parcela.
-- **Mi perfil:** nombre editable, racha diaria y actividad.
-- **Modo prueba:** simulación de pH, humedad, nitrógeno, fósforo y potasio. Una transición a estado crítico muestra un aviso y una notificación local.
+La barra inferior sigue este orden y abre **Mi perfil** al iniciar:
+
+1. **Mi perfil:** nombre editable, racha diaria, actividad y botón **Dispositivos**, que abre los sensores y equipos por parcela con su conexión y batería.
+2. **Smart-Cycle:** simulador por parcela con sequía, calor, lluvia intensa, helada, riego, fertilización y plagas combinables. Permite ajustar intensidad, condiciones iniciales, horizonte de 1 a 60 días y días que faltan para cosechar. Compara el escenario con una referencia sin eventos, muestra gráficas, estadísticas de condición, humedad y merma potencial, y calcula cuándo se alcanza el umbral de deterioro del modelo, incluidos días adicionales en la parcela.
+3. **Cultivos:** pH, humedad, nutrientes, estado, alertas y recomendaciones orientativas.
+4. **Smart-Market:** tienda ficticia de seis sensores del archivo **Resumen de Sensores Agrícolas**, con búsqueda, filtros, fichas, carrito y pedido de demostración sin cobros ni envíos. Mantiene soles y dólares separados: SEN0193 S/37, DS18B20 S/20, SHT31 S/30, SEN0161-V2 S/250, DFR0300 US$69.90 y SEN0604 US$69 por importación. La referencia local del SEN0604, S/390, se muestra agotada. Son referencias del archivo, no cotizaciones ni stock en vivo.
+5. **MAPA:** mapa satelital Mapbox en Android/iOS con token, parcelas persistentes, edición de vértices, vista 2D/3D, selección, creación y eliminación. Sin token usa OpenStreetMap.
+
+Smart-Cycle sustituye la pantalla manual Modo prueba. Sus escenarios se conservan al cambiar de pestaña y no sobrescriben las lecturas ni la geometría de la parcela. El carrito también se conserva durante la sesión al cambiar de módulo.
+
+El simulador usa reglas y perfiles de cultivo ficticios sin calibración de campo, intensidad constante y una fecha de cosecha introducida por el usuario. No usa clima real ni predice rendimiento comercial; los porcentajes de merma son indicadores didácticos. Su umbral (condición menor de 60/100 o merma potencial de al menos 15%) no garantiza un tiempo seguro de permanencia ni conservación del cultivo.
 
 Las recomendaciones son reglas de demostración basadas en umbrales. Antes de tomar una decisión agronómica, confirma los valores con un análisis de suelo y asesoría local.
 
@@ -83,7 +89,13 @@ Para probar Mapbox en un teléfono Android/iOS conectado o un simulador iOS y gu
 flutter drive --driver=test_driver/mapbox_device_driver.dart --target=integration_test/mapbox_device_test.dart --dart-define-from-file=mapbox.defines.json -d ID_DEL_DISPOSITIVO
 ```
 
-La prueba abre la app, cambia entre 3D y 2D, comprueba el guardado local al recibir el final de un arrastre y vuelve al mapa desde Mis cultivos. Restaura la geometría original al terminar; el gesto físico de arrastrar se verifica manualmente.
+La prueba entra en MAPA desde Mi perfil, cambia entre 3D y 2D, comprueba el guardado local al recibir el final de un arrastre y vuelve al mapa desde Cultivos. Restaura la geometría original al terminar; el gesto físico de arrastrar se verifica manualmente.
+
+Para verificar los nuevos módulos, el acceso a Dispositivos y la conservación del carrito entre pestañas, con capturas en `build/module-review/`:
+
+```sh
+flutter drive --driver=test_driver/modules_driver.dart --target=integration_test/modules_device_test.dart -d ID_DEL_DISPOSITIVO
+```
 
 La estructura separa `data/` (modelos, estado y servicios), `app/` (tema y navegación) y `screens/` (módulos). Provider comparte el estado entre pantallas. Las animaciones de navegación, entrada escalonada, parcelas y controles usan widgets nativos de Flutter.
 

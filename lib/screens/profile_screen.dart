@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../app/app_theme.dart';
 import '../app/ui.dart';
 import '../data/terra_store.dart';
+import 'devices_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -98,6 +99,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         tooltip: 'Editar nombre',
                       ),
                     ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              OutlinedButton.icon(
+                key: const Key('profile-devices-button'),
+                icon: const Icon(Icons.sensors_outlined),
+                label: const Text('Dispositivos'),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(52),
+                ),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => Scaffold(
+                      appBar: AppBar(title: const Text('Mis dispositivos')),
+                      body: const SafeArea(top: false, child: DevicesScreen()),
+                    ),
                   ),
                 ),
               ),
@@ -219,7 +237,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Estás usando el modo prueba. Los datos de sensores son demostrativos.',
+                          'Los datos de sensores son demostrativos. Explora escenarios desde Smart-Cycle.',
                           style: TextStyle(
                             color: muted,
                             fontSize: 12,

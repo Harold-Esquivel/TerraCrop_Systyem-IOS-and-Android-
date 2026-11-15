@@ -17,7 +17,7 @@ class CropsScreen extends StatelessWidget {
       children: [
         PageIntro(
           eyebrow: 'Monitoreo inteligente',
-          title: 'Mis cultivos',
+          title: 'Cultivos',
           subtitle: 'La salud de tu campo, siempre clara',
         ),
         Expanded(

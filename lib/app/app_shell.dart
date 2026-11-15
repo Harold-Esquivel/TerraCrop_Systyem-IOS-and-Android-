@@ -3,10 +3,10 @@ import 'dart:ui' show lerpDouble;
 import 'package:flutter/material.dart';
 
 import '../screens/crops_screen.dart';
-import '../screens/devices_screen.dart';
 import '../screens/map_screen.dart';
 import '../screens/profile_screen.dart';
-import '../screens/test_screen.dart';
+import '../screens/smart_cycle_screen.dart';
+import '../screens/smart_market_screen.dart';
 import 'app_theme.dart';
 
 class AppShell extends StatefulWidget {
@@ -22,20 +22,24 @@ class _AppShellState extends State<AppShell>
   double fromIndex = 0;
   double toIndex = 0;
   late final AnimationController navigation;
+  late final Animation<double> pageTransition = navigation.drive(
+    CurveTween(curve: Curves.easeOutCubic),
+  );
+  final visited = <int>{0};
 
   static const labels = [
-    'Mapa',
-    'Mis cultivos',
-    'Dispositivos',
     'Mi perfil',
-    'Modo prueba',
+    'Smart-Cycle',
+    'Cultivos',
+    'Smart-Market',
+    'MAPA',
   ];
   static const icons = [
-    Icons.map_outlined,
-    Icons.grass_outlined,
-    Icons.sensors_outlined,
     Icons.person_outline_rounded,
-    Icons.science_outlined,
+    Icons.cyclone_outlined,
+    Icons.grass_outlined,
+    Icons.storefront_outlined,
+    Icons.map_outlined,
   ];
 
   @override
@@ -44,6 +48,7 @@ class _AppShellState extends State<AppShell>
     navigation = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 380),
+      value: 1,
     );
   }
 
@@ -65,6 +70,7 @@ class _AppShellState extends State<AppShell>
     setState(() {
       direction = index > selected ? 1 : -1;
       selected = index;
+      visited.add(index);
       fromIndex = currentPosition;
       toIndex = index.toDouble();
     });
@@ -74,31 +80,35 @@ class _AppShellState extends State<AppShell>
   @override
   Widget build(BuildContext context) {
     final pages = [
-      const MapScreen(),
-      const CropsScreen(),
-      const DevicesScreen(),
       const ProfileScreen(),
-      const TestScreen(),
+      const SmartCycleScreen(),
+      const CropsScreen(),
+      const SmartMarketScreen(),
+      const MapScreen(),
     ];
     return Scaffold(
       body: SafeArea(
         bottom: false,
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 400),
-          switchInCurve: Curves.easeOutCubic,
-          switchOutCurve: Curves.easeInOut,
-          transitionBuilder: (child, animation) {
-            final incoming = child.key == ValueKey(selected);
-            final offset = Tween<Offset>(
-              begin: Offset(incoming ? .08 * direction : -.08 * direction, 0),
+        child: FadeTransition(
+          opacity: Tween<double>(begin: .65, end: 1).animate(pageTransition),
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: Offset(.035 * direction, 0),
               end: Offset.zero,
-            ).animate(animation);
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(position: offset, child: child),
-            );
-          },
-          child: KeyedSubtree(key: ValueKey(selected), child: pages[selected]),
+            ).animate(pageTransition),
+            child: IndexedStack(
+              index: selected,
+              children: [
+                for (var i = 0; i < pages.length; i++)
+                  TickerMode(
+                    enabled: selected == i,
+                    child: visited.contains(i)
+                        ? pages[i]
+                        : const SizedBox.shrink(),
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
       bottomNavigationBar: SafeArea(
@@ -166,74 +176,82 @@ class _AppShellState extends State<AppShell>
                             for (var i = 0; i < 5; i++)
                               SizedBox(
                                 width: itemWidth,
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(19),
-                                  onTap: () => select(i),
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(top: 5),
-                                    child: Column(
-                                      children: [
-                                        SizedBox(
-                                          height: 50,
-                                          child: Center(
-                                            child:
-                                                TweenAnimationBuilder<double>(
-                                                  key: ValueKey(
-                                                    'nav-$i-$selected',
-                                                  ),
-                                                  tween: Tween(
-                                                    begin: i == selected
-                                                        ? 1.14
-                                                        : 1,
-                                                    end: 1,
-                                                  ),
-                                                  duration: const Duration(
-                                                    milliseconds: 380,
-                                                  ),
-                                                  curve: Curves.elasticOut,
-                                                  builder: (_, scale, child) =>
-                                                      Transform.scale(
-                                                        scale: scale,
-                                                        child: child,
+                                child: Semantics(
+                                  button: true,
+                                  selected: selected == i,
+                                  child: InkWell(
+                                    key: Key('nav-tab-$i'),
+                                    borderRadius: BorderRadius.circular(19),
+                                    onTap: () => select(i),
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(top: 5),
+                                      child: Column(
+                                        children: [
+                                          SizedBox(
+                                            height: 50,
+                                            child: Center(
+                                              child:
+                                                  TweenAnimationBuilder<double>(
+                                                    key: ValueKey(
+                                                      'nav-$i-$selected',
+                                                    ),
+                                                    tween: Tween(
+                                                      begin: i == selected
+                                                          ? 1.14
+                                                          : 1,
+                                                      end: 1,
+                                                    ),
+                                                    duration: const Duration(
+                                                      milliseconds: 380,
+                                                    ),
+                                                    curve: Curves.elasticOut,
+                                                    builder:
+                                                        (_, scale, child) =>
+                                                            Transform.scale(
+                                                              scale: scale,
+                                                              child: child,
+                                                            ),
+                                                    child: Icon(
+                                                      icons[i],
+                                                      size: 23,
+                                                      color: Color.lerp(
+                                                        muted.withValues(
+                                                          alpha: .78,
+                                                        ),
+                                                        Colors.white,
+                                                        (1 -
+                                                                (position - i)
+                                                                    .abs())
+                                                            .clamp(0, 1),
                                                       ),
-                                                  child: Icon(
-                                                    icons[i],
-                                                    size: 23,
-                                                    color: Color.lerp(
-                                                      muted.withValues(
-                                                        alpha: .78,
-                                                      ),
-                                                      Colors.white,
-                                                      (1 - (position - i).abs())
-                                                          .clamp(0, 1),
                                                     ),
                                                   ),
-                                                ),
+                                            ),
                                           ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        SizedBox(
-                                          width: itemWidth - 6,
-                                          child: FittedBox(
-                                            fit: BoxFit.scaleDown,
-                                            child: Text(
-                                              labels[i],
-                                              style: TextStyle(
-                                                fontSize: 10,
-                                                letterSpacing: -.15,
-                                                color: i == selected
-                                                    ? blue
-                                                    : muted.withValues(
-                                                        alpha: .85,
-                                                      ),
-                                                fontWeight: i == selected
-                                                    ? FontWeight.w800
-                                                    : FontWeight.w600,
+                                          const SizedBox(height: 2),
+                                          SizedBox(
+                                            width: itemWidth - 6,
+                                            child: FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              child: Text(
+                                                labels[i],
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  letterSpacing: -.15,
+                                                  color: i == selected
+                                                      ? blue
+                                                      : muted.withValues(
+                                                          alpha: .85,
+                                                        ),
+                                                  fontWeight: i == selected
+                                                      ? FontWeight.w800
+                                                      : FontWeight.w600,
+                                                ),
                                               ),
                                             ),
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),

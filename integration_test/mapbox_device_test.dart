@@ -35,6 +35,8 @@ void main() {
     await waitFor(tester, login);
     await tester.pump(const Duration(seconds: 3));
     await tester.tap(login);
+    await waitFor(tester, find.byKey(const Key('nav-tab-4')));
+    await tester.tap(find.byKey(const Key('nav-tab-4')));
     await waitFor(tester, find.byType(MapboxParcelMap));
     await tester.pump(const Duration(seconds: 15));
     expect(tester.takeException(), isNull);
@@ -77,9 +79,9 @@ void main() {
       }
     }
 
-    await tester.tap(find.text('Mis cultivos').last);
+    await tester.tap(find.byKey(const Key('nav-tab-2')));
     await tester.pump(const Duration(seconds: 1));
-    await tester.tap(find.text('Mapa').last);
+    await tester.tap(find.byKey(const Key('nav-tab-4')));
     await waitFor(tester, find.byType(MapboxParcelMap));
     await tester.pump(const Duration(seconds: 5));
     expect(tester.takeException(), isNull);
