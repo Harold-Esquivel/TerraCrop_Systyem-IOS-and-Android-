@@ -9,6 +9,8 @@ flutter pub get
 flutter run
 ```
 
+La instalación y revisión de este equipo, los comandos para Android y los requisitos pendientes para iOS están en [docs/SYSTEM_REVIEW.md](docs/SYSTEM_REVIEW.md). En este Mac, `source tools/dev_env.sh` prepara Java 21, Node 22 y las herramientas de Android para la terminal actual.
+
 La primera apertura muestra tres parcelas de ejemplo cerca de Lima. El mapa necesita internet; los datos de parcelas, perfil, racha y simulaciones quedan guardados en el dispositivo. Las parcelas de ejemplo se pueden editar o eliminar. Para crear una, toca **Nueva parcela** y marca dos esquinas opuestas del rectángulo. El mapa permite desplazar y acercar la vista antes de dibujar.
 
 ## Mapa satelital Mapbox
@@ -47,7 +49,7 @@ Smart-Cycle sustituye la pantalla manual Modo prueba. Sus escenarios se conserva
 
 El simulador usa reglas y perfiles de cultivo ficticios sin calibración de campo, intensidad constante y una fecha de cosecha introducida por el usuario. No usa clima real ni predice rendimiento comercial; los porcentajes de merma son indicadores didácticos. Su umbral (condición menor de 60/100 o merma potencial de al menos 15%) no garantiza un tiempo seguro de permanencia ni conservación del cultivo.
 
-La base regional está en `assets/data/agronomy.json`, generada del Excel original conservado en `data/agronomy/`. Incluye 13 cultivos, 169 compatibilidades, tres secuencias, 13 reglas de suelo, nueve grupos de microorganismos y 16 referencias. Para reproducir la importación, ejecuta `python3 tools/import_agronomy.py`. Las fórmulas se conservan como texto con su resultado cacheado; no se ejecutan. La clasificación y las advertencias son las del archivo, no una verificación independiente de todas sus fuentes.
+La base regional está en `assets/data/agronomy.json`, generada del JSON 2.1 original conservado en `data/agronomy/TerraCrop_base_para_app_v2.json`. Incluye 14 cultivos, 196 compatibilidades, tres secuencias diseñadas, cinco secuencias locales, 14 calendarios, 14 umbrales críticos, 13 reglas de suelo, nueve grupos de microorganismos y 40 referencias. Conserva también presentaciones, productos, reglas de alertas, advertencias, fuentes dinámicas y revisiones. Para reproducir la importación, ejecuta `python3 tools/import_agronomy.py`. El planificador consulta las ventanas de siembra y muestra las revisiones pendientes del cultivo. Las descripciones de integración se conservan como datos; las conexiones a fuentes dinámicas requieren implementación y datos reales. La clasificación y las advertencias son las del archivo, no una verificación independiente de todas sus fuentes.
 
 Sin análisis registrado, la app identifica explícitamente sus pH, humedad e índices N/P/K como datos de demostración. El editor de análisis permite pH, CE del extracto saturado en dS/m, materia orgánica y el diagnóstico cualitativo de cada nutriente. Los campos vacíos permanecen desconocidos: no se reemplazan por valores de prueba ni se consideran saludables. Los requerimientos de N/P₂O₅/K₂O en kg/ha son referencias de fertilización por campaña, no concentraciones medidas ni dosis calculadas.
 
@@ -76,7 +78,7 @@ La cuenta anónima conserva su identidad en la instalación actual. Para recuper
 
 ## Distribución Android
 
-La versión actual es **1.3.0+6**, con API mínima 24. Para compartir en teléfonos, utiliza un APK release. Se verificó la instalación del release anterior y su actualización al nuevo en Android 15 ARM64 virtual; esto no determina la causa del fallo reportado en teléfonos físicos enviados por WhatsApp. La evidencia y los límites están en [docs/ANDROID_INSTALLATION.md](docs/ANDROID_INSTALLATION.md).
+La versión actual es **1.3.1+7**, con API mínima 24. Para compartir en teléfonos, utiliza un APK release. Se verificó la instalación del release anterior y su actualización al nuevo en Android 15 ARM64 virtual; esto no determina la causa del fallo reportado en teléfonos físicos enviados por WhatsApp. La evidencia y los límites están en [docs/ANDROID_INSTALLATION.md](docs/ANDROID_INSTALLATION.md).
 
 La compilación universal cubre ARM32, ARM64 y x86_64. Para un teléfono ARM64 puede generarse un archivo más pequeño sin cambiar el código de versión:
 
@@ -94,7 +96,7 @@ flutter test
 flutter build apk --debug
 ```
 
-La suite incluye 105 pruebas unitarias y de interfaz para los datos agrícolas y las funciones de la app, más las 12 pruebas de aceptación de `audit/`. La prueba nativa aislada de Android verifica el catálogo, los cuidados resumidos en modo claro y oscuro, el análisis parcial, la rotación y el historial con datos en memoria:
+La suite incluye 116 pruebas unitarias y de interfaz para los datos agrícolas y las funciones de la app, más las 12 pruebas de aceptación de `audit/` y 13 pruebas Python de importación. La prueba nativa aislada de Android verifica el catálogo, los cuidados resumidos en modo claro y oscuro, el análisis parcial, la rotación y el historial con datos en memoria:
 
 ```sh
 flutter test audit/crop_recommendations_audit_test.dart
@@ -135,3 +137,7 @@ flutter drive --driver=test_driver/appearance_driver.dart --target=integration_t
 La estructura separa `data/` (modelos, estado y servicios), `app/` (tema y navegación) y `screens/` (módulos). Provider comparte el estado entre pantallas. Las animaciones de navegación, entrada escalonada, parcelas y controles usan widgets nativos de Flutter.
 
 Los servidores públicos de teselas de OpenStreetMap se usan únicamente para el modo de demostración sin Mapbox. Para distribución a gran escala, configura un proveedor de teselas conforme a su política de uso.
+
+## Clima NASA POWER integrado
+
+Se incorporaron las siete variables históricas de 2015–2025 desde 4018 registros diarios verificados. En Smart-Cycle → Planificar campaña, activa **Usar referencias históricas de La Joya** para consultar este contexto. Son referencias históricas, sin coordenadas exactas, pronósticos ni mediciones de suelo de la parcela. Los originales están en `data/environment/private/power_package/`, excluidos de Git. Para reproducir la validación e importación: `python3 tools/import_power_package.py data/environment/private/power_package`. Evidencia en `build/power-review/`.

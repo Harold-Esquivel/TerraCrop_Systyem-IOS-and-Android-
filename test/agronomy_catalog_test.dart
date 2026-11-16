@@ -25,15 +25,18 @@ void main() {
       jsonDecode(contents) as Map<String, dynamic>;
   final catalog = AgronomyCatalog.fromJson(sourceJson());
 
-  test('conserva todas las tablas y las 169 parejas del Excel', () {
-    expect(catalog.crops, hasLength(13));
-    expect(catalog.compatibility, hasLength(169));
+  test('integra el JSON 2.1 completo y sus 196 parejas', () {
+    expect(catalog.crops, hasLength(14));
+    expect(catalog.compatibility, hasLength(196));
     expect(catalog.sequences, hasLength(3));
     expect(catalog.sequenceDetails, hasLength(12));
     expect(catalog.soilRules, hasLength(13));
     expect(catalog.microorganisms, hasLength(9));
-    expect(catalog.sources, hasLength(16));
-    expect(catalog.rawTables, hasLength(8));
+    expect(catalog.sources, hasLength(40));
+    expect(catalog.rawTables, isEmpty);
+    expect(catalog.rawDocument.keys, hasLength(18));
+    expect(catalog.source['version'], '2.1');
+    expect(catalog.findCrop('Zanahoria')!.id, 'C014');
     for (final previous in catalog.crops) {
       for (final next in catalog.crops) {
         final pair = catalog.compatibilityFor(previous.id, next.id);
@@ -42,6 +45,56 @@ void main() {
       }
     }
     expect(catalog.source['sha256'], matches(RegExp(r'^[0-9a-f]{64}$')));
+  });
+
+  test(
+    'conserva calendarios, umbrales, revisiones y tablas complementarias',
+    () {
+      expect(catalog.calendars, hasLength(14));
+      expect(catalog.criticalThresholds, hasLength(14));
+      expect(catalog.calendarFor('Zanahoria')!.sowingMonths, [8, 9]);
+      expect(catalog.calendarFor('Alfalfa')!.sowingMonths, isEmpty);
+      expect(
+        catalog.calendarFor('Alfalfa')!.harvestLabel,
+        'Cortes todo el año',
+      );
+      expect(catalog.thresholdFor('Cebolla')!.lethal, -3);
+      expect(catalog.localSequences, hasLength(5));
+      expect(catalog.microorganismPresentations, hasLength(12));
+      expect(catalog.products, hasLength(18));
+      expect(catalog.preventiveAlerts, hasLength(11));
+      expect(catalog.warnings, hasLength(14));
+      expect(catalog.dynamicSources, hasLength(10));
+      expect(catalog.dataReviews, hasLength(15));
+      expect(
+        catalog.dataReviews.where((r) => r['estado'] == 'Pendiente del equipo'),
+        hasLength(5),
+      );
+      // Pending review R01 does not silently replace the supplied cycle.
+      expect(catalog.findCrop('Cebolla')!.periodMin, 150);
+      expect(catalog.findCrop('Cebolla')!.extractionN, 141);
+      expect(catalog.findCrop('Cebolla')!.nMin, 150);
+      expect(
+        () => catalog.products.first['producto'] = 'otro',
+        throwsUnsupportedError,
+      );
+      expect(
+        () => (catalog.rawDocument['cultivos'] as List).clear(),
+        throwsUnsupportedError,
+      );
+    },
+  );
+
+  test('rechaza meses inválidos y calendarios sin referencia de cultivo', () {
+    final invalid = sourceJson();
+    (invalid['calendars'] as List).first['sowingMonths'] = [13];
+    expect(() => AgronomyCatalog.fromJson(invalid), throwsFormatException);
+    final missing = sourceJson();
+    (missing['calendars'] as List).removeLast();
+    expect(() => AgronomyCatalog.fromJson(missing), throwsFormatException);
+    final empty = sourceJson();
+    empty['criticalThresholds'] = <dynamic>[];
+    expect(() => AgronomyCatalog.fromJson(empty), throwsFormatException);
   });
 
   test(

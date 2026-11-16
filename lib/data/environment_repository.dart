@@ -16,17 +16,23 @@ class EnvironmentalSource {
       spatialResolution = json['spatialResolution'] as String,
       quality = json['quality'] as String,
       state = json['state'] as String,
-      latitude = (json['latitude'] as num).toDouble(),
-      longitude = (json['longitude'] as num).toDouble(),
+      latitude = (json['latitude'] as num?)?.toDouble(),
+      longitude = (json['longitude'] as num?)?.toDouble(),
+      isRegionalReference = json['scope'] == 'regional_reference',
+      referenceFirstYear = json['referenceFirstYear'] as int? ?? 2015,
+      referenceLastYear = json['referenceLastYear'] as int? ?? 2024,
       bounds = (json['bounds'] as List?)
           ?.map((v) => (v as num).toDouble())
           .toList(),
       file = json['file'] as String,
       sha256 = json['sha256'] as String {
-    if (!latitude.isFinite ||
-        !longitude.isFinite ||
-        latitude.abs() > 90 ||
-        longitude.abs() > 180 ||
+    if ((!isRegionalReference && (latitude == null || longitude == null)) ||
+        (isRegionalReference &&
+            (latitude != null || longitude != null || bounds != null)) ||
+        (latitude != null && (!latitude!.isFinite || latitude!.abs() > 90)) ||
+        (longitude != null &&
+            (!longitude!.isFinite || longitude!.abs() > 180)) ||
+        referenceFirstYear > referenceLastYear ||
         (bounds != null &&
             (bounds!.length != 4 || bounds!.any((v) => !v.isFinite)))) {
       throw const FormatException('Coordenadas ambientales inválidas');
@@ -39,23 +45,27 @@ class EnvironmentalSource {
       state,
       file,
       sha256;
-  final double latitude, longitude;
+  final double? latitude, longitude;
+  final bool isRegionalReference;
+  final int referenceFirstYear, referenceLastYear;
   final List<double>? bounds;
 
   /// Geographic eligibility is an explicit pilot-context gate, not a claim
   /// that a satellite pixel resolves an individual parcel. Point files use a
   /// conservative ±0.05° association window, documented in the methodology.
   bool covers(Parcel parcel) =>
+      !isRegionalReference &&
       parcel.points.isNotEmpty &&
       parcel.points.every((p) {
         final b = bounds;
-        if (b != null)
+        if (b != null) {
           return p.longitude >= b[0] &&
               p.longitude <= b[2] &&
               p.latitude >= b[1] &&
               p.latitude <= b[3];
-        return (p.latitude - latitude).abs() <= .05 &&
-            (p.longitude - longitude).abs() <= .05;
+        }
+        return (p.latitude - latitude!).abs() <= .05 &&
+            (p.longitude - longitude!).abs() <= .05;
       });
 }
 
@@ -163,8 +173,9 @@ class EnvironmentRepository {
   }) : sources = List.unmodifiable(sources),
        observations = List.unmodifiable(observations),
        forecasts = List.unmodifiable(forecasts) {
-    if (sources.map((s) => s.id).toSet().length != sources.length)
+    if (sources.map((s) => s.id).toSet().length != sources.length) {
       throw const FormatException('Fuente ambiental duplicada');
+    }
     final keys = <String>{};
     for (final o in observations) {
       final s = sources.where((s) => s.id == o.sourceId).firstOrNull;
@@ -184,8 +195,9 @@ class EnvironmentRepository {
     }
   }
   factory EnvironmentRepository.fromJson(Map<String, dynamic> json) {
-    if (json['schemaVersion'] != 1)
+    if (json['schemaVersion'] != 1) {
       throw const FormatException('Versión ambiental desconocida');
+    }
     return EnvironmentRepository(
       sources: (json['sources'] as List)
           .map(
@@ -210,15 +222,27 @@ class EnvironmentRepository {
       limitations: (json['limitations'] as List).cast<String>(),
     );
   }
-  static Future<EnvironmentRepository> load({AssetBundle? bundle}) async =>
-      EnvironmentRepository.fromJson(
-        jsonDecode(
-              await (bundle ?? rootBundle).loadString(
-                'assets/data/environment.json',
-              ),
-            )
-            as Map<String, dynamic>,
-      );
+  static Future<EnvironmentRepository> load({AssetBundle? bundle}) async {
+    final assets = bundle ?? rootBundle;
+    final contents = await Future.wait([
+      assets.loadString('assets/data/environment.json'),
+      assets.loadString('assets/data/power_history.json'),
+    ]);
+    final repositories = contents
+        .map(
+          (raw) => EnvironmentRepository.fromJson(
+            jsonDecode(raw) as Map<String, dynamic>,
+          ),
+        )
+        .toList();
+    return EnvironmentRepository(
+      sources: repositories.expand((r) => r.sources).toList(),
+      observations: repositories.expand((r) => r.observations).toList(),
+      forecasts: repositories.expand((r) => r.forecasts).toList(),
+      limitations: repositories.expand((r) => r.limitations).toList(),
+    );
+  }
+
   final List<EnvironmentalSource> sources;
   final List<EnvironmentalObservation> observations;
   final List<SeasonalOutlook> forecasts;
@@ -232,18 +256,20 @@ class EnvironmentRepository {
     String sourceId,
     int month, {
     int? excludeYear,
-    int firstYear = 2015,
-    int lastYear = 2024,
+    int? firstYear,
+    int? lastYear,
   }) {
     final source = sources.where((s) => s.id == sourceId).firstOrNull;
     if (source == null) return null;
+    final periodStart = firstYear ?? source.referenceFirstYear;
+    final periodEnd = lastYear ?? source.referenceLastYear;
     final relevant = observations
         .where(
           (o) =>
               o.sourceId == sourceId &&
               o.date.month == month &&
-              o.date.year >= firstYear &&
-              o.date.year <= lastYear &&
+              o.date.year >= periodStart &&
+              o.date.year <= periodEnd &&
               o.date.year != excludeYear,
         )
         .toList();
@@ -283,17 +309,17 @@ class EnvironmentRepository {
       years: means.length,
       samples: samples,
       missing:
-          lastYear -
-          firstYear +
+          periodEnd -
+          periodStart +
           1 -
           (excludeYear != null &&
-                  excludeYear >= firstYear &&
-                  excludeYear <= lastYear
+                  excludeYear >= periodStart &&
+                  excludeYear <= periodEnd
               ? 1
               : 0) -
           means.length,
       period:
-          '$firstYear–$lastYear${excludeYear == null ? '' : ' (excluye $excludeYear)'}',
+          '$periodStart–$periodEnd${excludeYear == null ? '' : ' (excluye $excludeYear)'}',
     );
   }
 

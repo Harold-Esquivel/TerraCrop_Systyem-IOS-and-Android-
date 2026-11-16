@@ -26,7 +26,7 @@ No existe la hoja Diccionario mencionada en el índice. No hay calendario de sie
 ## Archivos ambientales recibidos
 
 - GPM/IMERG: 129 meses, enero 2015–septiembre 2025; Giovanni identifica GPM_3IMERGM_07, Final Run, exportación en mm/mes. Conservar bounding box solicitado y bounding box de datos; no confundir área pedida con resolución de parcela.
-- SMAP: 1.410 registros, abril 2015–diciembre 2025; punto -16.7510527, -71.8749387, m³/m³. Faltan producto/versión, resolución y banderas de calidad. No afirmar filtrado recomendado ni inferir humedad radicular.
+- SMAP: 1.410 registros, abril 2015–diciembre 2025; punto de consulta privado de La Joya, m³/m³. Faltan producto/versión, resolución y banderas de calidad. No afirmar filtrado recomendado ni inferir humedad radicular. Las coordenadas exactas se omiten en los archivos destinados a la app.
 - POWER, pronóstico estacional y boletín ENSO regional: no suministrados. Ausencia explícita; no descargar retrospectivas para presentarlas como pronóstico.
 
 ## Cambios previstos

@@ -49,10 +49,12 @@
       "temporalResolution": "irregular",
       "spatialResolution": "No documentada en el CSV",
       "bounds": null,
-      "latitude": -16.7510527,
-      "longitude": -71.8749387,
+      "latitude": null,
+      "longitude": null,
       "quality": "No verificable: CSV sin banderas; uso solo contextual",
-      "state": "historical_estimate"
+      "state": "historical_estimate",
+      "scope": "regional_reference",
+      "region": "La Joya, Arequipa"
     }
   ],
   "observations": [
@@ -12374,7 +12376,8 @@
   "limitations": [
     "Serie histórica disponible; no es una normal climática de 30 años ni un pronóstico.",
     "SMAP carece de producto/versión y banderas de calidad: no permite confirmar humedad radicular ni estrés de una parcela.",
-    "POWER no suministrado.",
-    "Sin pronóstico estacional ni boletín ENSO regional suministrados."
+    "POWER no incluido en este recurso.",
+    "Sin pronóstico estacional ni boletín ENSO regional suministrados.",
+    "SMAP: punto de consulta omitido por privacidad; usar únicamente como referencia seleccionada explícitamente."
   ]
 }

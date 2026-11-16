@@ -4,6 +4,12 @@ Revisión del 15 de noviembre de 2026. El usuario informó que un teléfono qued
 
 ## Evidencia obtenida
 
+### Actualización con JSON 2.1
+
+El APK actual de esta revisión es `build/system-review/TerraCrop-1.3.0-arm64.apk`, versión 1.3.0, código 6, API mínima 24, 89 309 476 bytes. Se verificaron firma v2, alineación ZIP de 16 KB y correspondencia exacta del catálogo empaquetado con el asset integrado: 14 cultivos y 196 compatibilidades. Se instaló conservando datos con `adb install -r` y arrancó correctamente en Android 15/API 35 ARM64 virtual. El flujo nativo de cuidados, apariencia clara/oscura, análisis parcial, rotación e historial también pasó. Las capturas están en `build/agronomy-review/` y el hash y registros en `build/system-review/`. Los detalles del entorno y los pendientes para iOS están en [SYSTEM_REVIEW.md](SYSTEM_REVIEW.md).
+
+La compilación está dirigida a ARM64 y utiliza la clave local de pruebas. No se verificó en teléfonos físicos ni con páginas de memoria de 16 KB. La evidencia siguiente corresponde a revisiones anteriores.
+
 - Los APK anteriores debug y release tienen ZIP íntegro, firma APK v2 válida, no llevan `testOnly`, y contienen ARM de 32 bits, ARM de 64 bits y x86 de 64 bits.
 - Ambos APK anteriores usan el mismo certificado local Android Debug. Esto descarta una diferencia de firma entre estos dos archivos, pero no con una instalación anterior generada en otra computadora.
 - El APK actualizado es versión 1.1.0, código 2, con API mínima 24. La firma y la alineación ZIP de 16 KB se verificaron con `apksigner` y `zipalign`. Las bibliotecas de 64 bits anteriores también se revisaron para alineación ELF.

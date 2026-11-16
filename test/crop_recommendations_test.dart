@@ -312,7 +312,7 @@ void main() {
   });
 
   test(
-    'rotaciones de los 13 cultivos nunca aceptan mismo cultivo o familia',
+    'rotaciones de todos los cultivos nunca aceptan mismo cultivo o familia',
     () {
       for (final current in catalog.crops) {
         final result = engine.assess(

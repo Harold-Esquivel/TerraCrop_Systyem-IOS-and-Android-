@@ -69,14 +69,14 @@ void main() {
       });
 
       final catalog = await AgronomyCatalog.load();
-      expect(catalog.crops.length, 13);
-      expect(catalog.compatibility.length, 169);
+      expect(catalog.crops.length, 14);
+      expect(catalog.compatibility.length, 196);
       expect(
         catalog.compatibility
             .map((p) => '${p.previousId}:${p.nextId}')
             .toSet()
             .length,
-        169,
+        196,
       );
       expect(catalog.findCrop('Papa')?.family, 'Solanaceae');
 
@@ -242,7 +242,7 @@ void main() {
       expect(tester.takeException(), isNull);
       binding.reportData ??= {};
       binding.reportData!['checks'] = {
-        'catalog': '13 cultivos y 169 pares únicos',
+        'catalog': '14 cultivos y 196 pares únicos',
         'combinedDeficits':
             'Tres cuidados prioritarios; otros dos disponibles al abrirlos',
         'presentation': 'Sin referencias al Excel; claro y oscuro comprobados',

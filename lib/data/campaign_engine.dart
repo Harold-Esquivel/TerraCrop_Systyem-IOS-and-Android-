@@ -60,6 +60,7 @@ class CampaignInput {
     required this.availableDays,
     this.irrigationAvailable,
     this.effectiveIrrigationM3Ha,
+    this.useRegionalClimateReference = false,
   }) : start = DateTime.utc(start.year, start.month, start.day) {
     if (availableDays < 1 ||
         availableDays > 3660 ||
@@ -77,6 +78,7 @@ class CampaignInput {
   final DateTime start;
   final int availableDays;
   final bool? irrigationAvailable;
+  final bool useRegionalClimateReference;
 
   /// Effective irrigation reaching the crop, not withdrawal or gross supply.
   final double? effectiveIrrigationM3Ha;
@@ -240,14 +242,16 @@ class CampaignEngine {
             : AttentionLevel.information,
         references: ['Compatibilidad ${pair.previousId} → ${pair.nextId}'],
       );
-      if (!blocked)
+      if (!blocked) {
         advantages.add(
           'Transición ${pair.level.toLowerCase()} en la matriz; sujeta a los demás criterios.',
         );
+      }
     }
     final recent = input.parcel.cropHistory.reversed.take(3).toList();
-    if (recent.isEmpty)
+    if (recent.isEmpty) {
       missing.add('Historial de campañas anteriores incompleto.');
+    }
     for (final name in recent) {
       final old = catalog.findCrop(name);
       if (old == null) {
@@ -299,9 +303,51 @@ class CampaignEngine {
     } else {
       advantages.add('El intervalo documentado de duración cabe en el plazo.');
     }
+    final calendar = catalog.calendarFor(crop.id);
+    if (calendar == null || calendar.sowingMonths.isEmpty) {
+      missing.add('Ventana local de siembra de ${crop.name} por confirmar.');
+    } else {
+      final withinWindow = calendar.sowingMonths.contains(start.month);
+      add(
+        'sowing-window',
+        withinWindow
+            ? 'Inicio dentro de la ventana local de referencia'
+            : 'Inicio fuera de la ventana local de referencia',
+        'mes de siembra o trasplante',
+        '${start.month}',
+        'mes',
+        'Meses de referencia: ${calendar.sowingMonths.join(', ')}',
+        '${calendar.evidence} Confianza declarada: ${calendar.confidence}. La ventana no garantiza aptitud de la campaña.',
+        [
+          'Confirmar variedad, clima reciente y fecha de siembra o trasplante con asesoría local.',
+        ],
+        level: withinWindow
+            ? AttentionLevel.information
+            : AttentionLevel.review,
+        origin: 'Calendario La Joya; ${catalog.source['fileName']}',
+        references: ['Calendario La Joya ${crop.id}'],
+      );
+    }
     missing.add(
-      'Sin ventanas locales de siembra ni calendario de etapas críticas por variedad. La temporada no queda confirmada.',
+      'Falta calendario de etapas críticas por variedad; la temporada no queda confirmada.',
     );
+    for (final review in catalog.dataReviews.where(
+      (r) =>
+          r['estado'] == 'Pendiente del equipo' &&
+          RegExp('\\b${crop.id}\\b').hasMatch(r['hoja_dato'] as String),
+    )) {
+      add(
+        'data-review-${review['id']}',
+        'Datos del cultivo pendientes de revisión',
+        review['hoja_dato'] as String,
+        review['valor_en_la_base'] as String,
+        '',
+        'Revisión ${review['id']} pendiente del equipo',
+        review['lo_que_dicen_las_fuentes'] as String,
+        [review['accion_propuesta'] as String],
+        references: ['Revisión de datos ${review['id']}'],
+      );
+    }
     if (crop.periodDescription.toLowerCase().contains('trasplante')) {
       missing.add(
         'La duración de ${crop.name} comienza en trasplante; el semillero previo no está incluido.',
@@ -413,13 +459,20 @@ class CampaignEngine {
         ('power_T2M', '°C'),
         ('power_T2M_MIN', '°C'),
         ('power_T2M_MAX', '°C'),
+        ('power_PRECTOTCORR', 'mm/month'),
         ('power_RH2M', '%'),
         ('power_ALLSKY_SFC_SW_DWN', 'kWh/m²/day'),
+        ('power_WS2M', 'm/s'),
       ]) {
         final source = environment.sources
             .where((s) => s.id == spec.$1 && s.unit == spec.$2)
             .firstOrNull;
-        if (source == null || !source.covers(input.parcel)) continue;
+        if (source == null) continue;
+        if (source.isRegionalReference
+            ? !input.useRegionalClimateReference
+            : !source.covers(input.parcel)) {
+          continue;
+        }
         final stat = environment.monthly(source.id, m.month);
         if (stat != null) climate.add(stat);
       }
@@ -450,25 +503,50 @@ class CampaignEngine {
         );
       }
     }
+    if (climate.any((c) => c.source.isRegionalReference)) {
+      add(
+        'regional-climate-reference',
+        'Referencia histórica de La Joya seleccionada',
+        'ámbito climático',
+        'Referencia regional',
+        '',
+        'Pertinencia local por confirmar',
+        'Los datos proceden de puntos de consulta con coordenadas omitidas. La selección permite compararlos como contexto; no confirma que representen esta parcela.',
+        [
+          'Contrastar con ubicación, estación meteorológica y observaciones locales.',
+        ],
+        origin:
+            'Referencias históricas proporcionadas; sin geolocalización exacta publicada',
+        references: [
+          'NASA POWER',
+          if (climate.any((c) => c.source.id == 'smap')) 'SMAP',
+        ],
+      );
+    }
     final rain = climate.where((v) => v.source.id == 'gpm').toList();
-    if (rain.length != months.length || months.isEmpty)
+    if (rain.length != months.length || months.isEmpty) {
       missing.add(
         'Precipitación GPM ausente, fuera del ámbito local o incompleta para el periodo.',
       );
-    if (!climate.any((v) => v.source.id == 'smap'))
+    }
+    if (!climate.any((v) => v.source.id == 'smap')) {
       missing.add(
         'Sin contexto SMAP aplicable a la ubicación y meses seleccionados.',
       );
-    if (climate.any((v) => v.source.id == 'smap'))
+    }
+    if (climate.any((v) => v.source.id == 'smap')) {
       missing.add(
         'SMAP sin banderas de calidad, producto ni resolución verificables; no mide la zona radicular de la parcela.',
       );
-    if (input.irrigationAvailable == null)
+    }
+    if (input.irrigationAvailable == null) {
       missing.add('Disponibilidad de riego desconocida.');
-    if (input.effectiveIrrigationM3Ha == null)
+    }
+    if (input.effectiveIrrigationM3Ha == null) {
       missing.add(
         'Volumen efectivo de riego y eficiencia no documentados; no se calcula una dosis de riego.',
       );
+    }
     if (input.irrigationAvailable == false ||
         (input.effectiveIrrigationM3Ha != null &&
             !crop.isAnnualWater &&
@@ -549,6 +627,7 @@ class CampaignEngine {
               availableDays: input.availableDays,
               irrigationAvailable: input.irrigationAvailable,
               effectiveIrrigationM3Ha: input.effectiveIrrigationM3Ha,
+              useRegionalClimateReference: input.useRegionalClimateReference,
             ),
           ),
         )
@@ -586,6 +665,7 @@ class CampaignEngine {
               start: start,
               availableDays: (input.availableDays - max).clamp(1, 3660),
               irrigationAvailable: input.irrigationAvailable,
+              useRegionalClimateReference: input.useRegionalClimateReference,
             ),
           );
           results.add(result);

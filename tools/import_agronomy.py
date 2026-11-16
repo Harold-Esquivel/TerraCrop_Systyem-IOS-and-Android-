@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-"""Import the supplied workbook as data; never evaluate formulas or external links.
+"""Import the supplied JSON or workbook as data; never execute embedded text.
 
-Only Python's standard library is required. The original cells are retained in
-rawTables alongside the normalized, typed data consumed by the Flutter app.
+Only Python's standard library is required. Workbook cells are retained in
+rawTables, or the complete JSON in rawDocument, alongside the normalized data.
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 import posixpath
 import re
@@ -106,10 +107,9 @@ SOURCE = [("A", "id", str), ("B", "reference", str), ("C", "support", str), ("D"
 
 
 def validate(data):
-    expected = {"crops": 13, "compatibility": 169, "sequences": 3, "sequenceDetails": 12, "microorganisms": 9, "soilRules": 13, "sources": 16}
-    for key, count in expected.items():
-        if len(data[key]) != count:
-            raise ValueError(f"{key}: expected {count}, got {len(data[key])}")
+    for key in ("crops", "compatibility", "sequences", "sequenceDetails", "microorganisms", "soilRules", "sources"):
+        if not data[key]:
+            raise ValueError(f"Empty required table: {key}")
     for key in ["crops", "sequences", "microorganisms", "soilRules", "sources"]:
         ids = [r["id"] for r in data[key]]
         if len(ids) != len(set(ids)):
@@ -118,8 +118,8 @@ def validate(data):
     micro_ids = {r["id"] for r in data["microorganisms"]}
     sequence_ids = {r["id"] for r in data["sequences"]}
     pairs = {(r["previousId"], r["nextId"]) for r in data["compatibility"]}
-    if pairs != {(a, b) for a in crop_ids for b in crop_ids}:
-        raise ValueError("Compatibility must cover every one of the 13 × 13 ordered pairs")
+    if len(pairs) != len(data['compatibility']) or pairs != {(a, b) for a in crop_ids for b in crop_ids}:
+        raise ValueError("Compatibility must cover every ordered crop pair exactly once")
     for row in data["compatibility"]:
         if row["score"] not in (0, 1, 2, 3):
             raise ValueError("Compatibility score outside 0–3")
@@ -129,12 +129,19 @@ def validate(data):
     for row in data["sequenceDetails"]:
         if row["sequenceId"] not in sequence_ids or row["cropId"] not in crop_ids:
             raise ValueError("Unknown reference in sequence step")
+    for sequence in data['sequences']:
+        steps = [r for r in data['sequenceDetails'] if r['sequenceId'] == sequence['id']]
+        if sorted(r['campaign'] for r in steps) != list(range(1, len(steps) + 1)) or not steps:
+            raise ValueError('Invalid campaign order')
+        for field, total in [('water', 'totalWater'), ('days', 'totalDays')]:
+            if not math.isclose(sum(r[field] for r in steps), sequence[total]):
+                raise ValueError(f"Sequence {sequence['id']}: inconsistent {total}")
     for crop in data["crops"]:
         for prefix in ("water", "period", "temperature", "ph", "n", "p", "k"):
             low, high = crop[prefix + "Min"], crop[prefix + "Max"]
             if prefix == "period" and low is None and high is None and crop["periodMean"] is None:
                 continue
-            if low is None or high is None or low > high:
+            if low is None or high is None or not math.isfinite(low) or not math.isfinite(high) or low > high:
                 raise ValueError(f"Invalid {prefix} range for {crop['id']}")
             mean = crop.get(prefix + "Mean")
             if mean is not None and not low <= mean <= high:
@@ -142,6 +149,11 @@ def validate(data):
 
 
 def import_data(path):
+    if path.suffix.lower() == '.json':
+        from import_agronomy_json import import_json
+        data = import_json(path)
+        validate(data)
+        return data
     tables, formulas = read_workbook(path)
     data = {
         "schemaVersion": 1,
@@ -166,7 +178,7 @@ def import_data(path):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("input", nargs="?", type=Path, default=ROOT / "data/agronomy/TerraCrop_base_para_app.xlsx")
+    parser.add_argument("input", nargs="?", type=Path, default=ROOT / "data/agronomy/TerraCrop_base_para_app_v2.json")
     parser.add_argument("--output", type=Path, default=ROOT / "assets/data/agronomy.json")
     args = parser.parse_args()
     data = import_data(args.input)

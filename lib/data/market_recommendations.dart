@@ -181,8 +181,9 @@ class MarketRecommendationService {
         },
         _ => catalog.crops.map((c) => c.id).toSet(),
       };
-      if (!allowed.contains(crop.id))
+      if (!allowed.contains(crop.id)) {
         blockers.add('Asociación con ${crop.name} no documentada en la ficha.');
+      }
       if (analysis?.waterlogged != false) {
         if (analysis?.waterlogged == true) {
           blockers.add(
@@ -213,20 +214,25 @@ class MarketRecommendationService {
         }
       }
       if (id == 'M001') {
-        if (analysis?.nitrogen == NutrientLevel.high)
+        if (analysis?.nitrogen == NutrientLevel.high) {
           blockers.add('No combinar con N mineral alto.');
-        if (analysis?.phosphorus == NutrientLevel.unknown || analysis == null)
+        }
+        if (analysis?.phosphorus == NutrientLevel.unknown || analysis == null) {
           pending.add('Confirmar disponibilidad de P para nodulación.');
-        if (analysis?.phosphorus == NutrientLevel.low)
+        }
+        if (analysis?.phosphorus == NutrientLevel.low) {
           blockers.add('P bajo: revisar antes de esperar nodulación efectiva.');
+        }
         if (analysis?.ec != null &&
             crop.ecThreshold != null &&
-            analysis!.ec! >= crop.ecThreshold!)
+            analysis!.ec! >= crop.ecThreshold!) {
           blockers.add('CE alcanza el umbral de la leguminosa.');
+        }
       }
       if ({'M002', 'M004', 'M005', 'M009'}.contains(id) &&
-          analysis?.organicMatter == null)
+          analysis?.organicMatter == null) {
         pending.add('Confirmar materia orgánica y condiciones del compost.');
+      }
       if ({'M001', 'M002', 'M004', 'M007', 'M009'}.contains(id) &&
           analysis?.moistureLow != false) {
         if (analysis?.moistureLow == true) {
@@ -236,15 +242,18 @@ class MarketRecommendationService {
         }
       }
       if (id == 'M006') {
-        if (analysis?.phosphorus == NutrientLevel.high)
+        if (analysis?.phosphorus == NutrientLevel.high) {
           blockers.add('P alto limita colonización micorrízica.');
-        if (analysis?.phosphorus == NutrientLevel.unknown || analysis == null)
+        }
+        if (analysis?.phosphorus == NutrientLevel.unknown || analysis == null) {
           pending.add('Descartar exceso de P.');
+        }
       }
-      if (id == 'M008' && (analysis?.ec == null || analysis!.ec! < 2))
+      if (id == 'M008' && (analysis?.ec == null || analysis!.ec! < 2)) {
         blockers.add(
           'No se confirmó salinidad ligera a moderada; no recomendar por humedad baja aislada.',
         );
+      }
       // Even with compatible measurements the strain, registration, application
       // conditions and product interactions remain a necessary human check.
       pending.add(

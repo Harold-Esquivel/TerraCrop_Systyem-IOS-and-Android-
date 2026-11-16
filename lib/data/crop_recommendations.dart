@@ -90,7 +90,7 @@ class CropRecommendationEngine {
     final demo = analysis == null;
     final missing = <String>{};
     final notes = <String>[
-      'Base de referencia: TerraCrop_base para app.xlsx, La Joya, Arequipa. Las condiciones locales y el análisis de suelo deben validarse antes de aplicar tratamientos.',
+      'Base de referencia: ${catalog.source['fileName']}, La Joya, Arequipa. Las condiciones locales y el análisis de suelo deben validarse antes de aplicar tratamientos.',
       'Los rangos N, P₂O₅ y K₂O del catálogo son requerimientos de referencia en kg/ha; no son concentraciones medidas ni dosis calculadas para esta parcela.',
       'La demanda hídrica del cultivo no equivale al riego aplicado ni demuestra ahorro de agua.',
       'Los microorganismos son opciones condicionadas: verificar cepa, compatibilidad, condiciones del suelo y registro del producto comercial.',
@@ -535,7 +535,7 @@ class CropRecommendationEngine {
           );
           if (next.ecThreshold == null) {
             conditions.add(
-              'El Excel no aporta un umbral de CE para este cultivo.',
+              'La base no aporta un umbral de CE para este cultivo.',
             );
           }
         }

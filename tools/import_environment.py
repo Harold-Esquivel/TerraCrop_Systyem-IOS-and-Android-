@@ -69,7 +69,7 @@ def import_smap(path):
     lat, lon = coords.pop()
     if not -90 <= lat <= 90 or not -180 <= lon <= 180:
         raise ValueError('Invalid SMAP coordinates')
-    source = provenance(path, id='smap', institution='NASA (según archivo suministrado)', product='SMAP; producto y versión no especificados', variable='surface_soil_moisture', unit='m³/m³', temporalResolution='irregular', spatialResolution='No documentada en el CSV', bounds=None, latitude=lat, longitude=lon, quality='No verificable: CSV sin banderas; uso solo contextual', state='historical_estimate')
+    source = provenance(path, id='smap', institution='NASA (según archivo suministrado)', product='SMAP; producto y versión no especificados', variable='surface_soil_moisture', unit='m³/m³', temporalResolution='irregular', spatialResolution='No documentada en el CSV', bounds=None, latitude=None, longitude=None, scope='regional_reference', region='La Joya, Arequipa', quality='No verificable: CSV sin banderas; uso solo contextual', state='historical_estimate')
     seen, observations = set(), []
     for row in rows:
         day = date.fromisoformat(row['Date'])
@@ -92,6 +92,10 @@ def import_power(path):
     spatialResolution. Daily precipitation mm/day is summed only for complete
     months; temperatures/radiation/RH averaged only for complete months.
     """
+    if '-BEGIN HEADER-' in path.read_text(encoding='utf-8-sig')[:200]:
+        from import_power_package import history
+        data = history(path)
+        return data['sources'], data['observations']
     meta = json.loads(path.with_suffix('.metadata.json').read_text())
     rows, _ = read_rows(path, 'YEAR,MO,DY,')
     lat, lon = float(meta['latitude']), float(meta['longitude'])
@@ -132,7 +136,7 @@ def build(gpm, smap, power=None):
     if power:
         ps, po = import_power(power)
         sources.extend(ps); observations.extend(po)
-    return dict(schemaVersion=1, region='La Joya, Arequipa', sources=sources, observations=observations, forecasts=[], enso=None, limitations=['Serie histórica disponible; no es una normal climática de 30 años ni un pronóstico.', 'SMAP carece de producto/versión y banderas de calidad: no permite confirmar humedad radicular ni estrés de una parcela.', 'POWER no suministrado.' if not power else 'POWER agregado solo en meses completos.', 'Sin pronóstico estacional ni boletín ENSO regional suministrados.'])
+    return dict(schemaVersion=1, region='La Joya, Arequipa', sources=sources, observations=observations, forecasts=[], enso=None, limitations=['Serie histórica disponible; no es una normal climática de 30 años ni un pronóstico.', 'SMAP carece de producto/versión y banderas de calidad: no permite confirmar humedad radicular ni estrés de una parcela.', 'POWER no incluido en este recurso.' if not power else 'POWER agregado solo en meses completos.', 'Sin pronóstico estacional ni boletín ENSO regional suministrados.', 'SMAP: punto de consulta omitido por privacidad; usar únicamente como referencia seleccionada explícitamente.'])
 
 
 def main():

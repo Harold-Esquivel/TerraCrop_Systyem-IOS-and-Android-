@@ -1,0 +1,146 @@
+{
+  "version": "1.0",
+  "modulo": "SmartCycle",
+  "tipo_dato": "climatologia_historica_observacional_modelada",
+  "fuente": "NASA POWER",
+  "periodo": "2015-01-01 a 2025-12-31",
+  "time_standard": "LST",
+  "unidades": {
+    "T2M": "C",
+    "T2M_MAX": "C",
+    "T2M_MIN": "C",
+    "PRECTOTCORR": "mm/mes (acumulado mensual medio)",
+    "RH2M": "%",
+    "ALLSKY_SFC_SW_DWN": "MJ/m2/dia",
+    "WS2M": "m/s"
+  },
+  "climatologia_mensual": [
+    {
+      "mes": 1,
+      "T2M": 20.931,
+      "T2M_MAX": 24.319,
+      "T2M_MIN": 18.594,
+      "PRECTOTCORR": 15.44,
+      "RH2M": 78.886,
+      "ALLSKY_SFC_SW_DWN": 23.618,
+      "WS2M": 2.835
+    },
+    {
+      "mes": 2,
+      "T2M": 21.558,
+      "T2M_MAX": 24.891,
+      "T2M_MIN": 19.347,
+      "PRECTOTCORR": 24.229,
+      "RH2M": 80.569,
+      "ALLSKY_SFC_SW_DWN": 20.967,
+      "WS2M": 2.71
+    },
+    {
+      "mes": 3,
+      "T2M": 21.102,
+      "T2M_MAX": 24.508,
+      "T2M_MIN": 18.852,
+      "PRECTOTCORR": 12.653,
+      "RH2M": 80.578,
+      "ALLSKY_SFC_SW_DWN": 21.318,
+      "WS2M": 2.503
+    },
+    {
+      "mes": 4,
+      "T2M": 19.593,
+      "T2M_MAX": 23.106,
+      "T2M_MIN": 17.193,
+      "PRECTOTCORR": 2.107,
+      "RH2M": 79.019,
+      "ALLSKY_SFC_SW_DWN": 22.616,
+      "WS2M": 2.397
+    },
+    {
+      "mes": 5,
+      "T2M": 18.093,
+      "T2M_MAX": 21.723,
+      "T2M_MIN": 15.58,
+      "PRECTOTCORR": 1.213,
+      "RH2M": 76.325,
+      "ALLSKY_SFC_SW_DWN": 20.913,
+      "WS2M": 2.069
+    },
+    {
+      "mes": 6,
+      "T2M": 16.687,
+      "T2M_MAX": 20.311,
+      "T2M_MIN": 14.185,
+      "PRECTOTCORR": 3.942,
+      "RH2M": 75.148,
+      "ALLSKY_SFC_SW_DWN": 19.568,
+      "WS2M": 1.956
+    },
+    {
+      "mes": 7,
+      "T2M": 16.076,
+      "T2M_MAX": 19.791,
+      "T2M_MIN": 13.463,
+      "PRECTOTCORR": 4.025,
+      "RH2M": 73.387,
+      "ALLSKY_SFC_SW_DWN": 20.417,
+      "WS2M": 2.016
+    },
+    {
+      "mes": 8,
+      "T2M": 15.975,
+      "T2M_MAX": 19.833,
+      "T2M_MIN": 13.212,
+      "PRECTOTCORR": 0.955,
+      "RH2M": 71.91,
+      "ALLSKY_SFC_SW_DWN": 23.434,
+      "WS2M": 2.135
+    },
+    {
+      "mes": 9,
+      "T2M": 16.45,
+      "T2M_MAX": 20.234,
+      "T2M_MIN": 13.606,
+      "PRECTOTCORR": 10.62,
+      "RH2M": 72.26,
+      "ALLSKY_SFC_SW_DWN": 25.876,
+      "WS2M": 2.329
+    },
+    {
+      "mes": 10,
+      "T2M": 17.333,
+      "T2M_MAX": 21.23,
+      "T2M_MIN": 14.459,
+      "PRECTOTCORR": 1.536,
+      "RH2M": 73.091,
+      "ALLSKY_SFC_SW_DWN": 28.341,
+      "WS2M": 2.485
+    },
+    {
+      "mes": 11,
+      "T2M": 18.335,
+      "T2M_MAX": 22.15,
+      "T2M_MIN": 15.574,
+      "PRECTOTCORR": 1.578,
+      "RH2M": 74.827,
+      "ALLSKY_SFC_SW_DWN": 29.499,
+      "WS2M": 2.696
+    },
+    {
+      "mes": 12,
+      "T2M": 19.638,
+      "T2M_MAX": 23.156,
+      "T2M_MIN": 17.099,
+      "PRECTOTCORR": 5.225,
+      "RH2M": 76.95,
+      "ALLSKY_SFC_SW_DWN": 27.311,
+      "WS2M": 2.778
+    }
+  ],
+  "limitaciones": [
+    "Promedios históricos, no pronóstico",
+    "No representan la humedad o fertilidad real de la parcela",
+    "No calculan automáticamente necesidades hídricas del cultivo ni recomendaciones de fertilización",
+    "Se requiere matriz agronómica validada, fechas de siembra y disponibilidad de riego para comparar escenarios"
+  ],
+  "zona_estudio": "La Joya, Arequipa, Perú (sin coordenadas exactas)"
+}

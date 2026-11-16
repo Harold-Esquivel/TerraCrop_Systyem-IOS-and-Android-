@@ -12,14 +12,15 @@ import '../data/terra_store.dart';
 import 'soil_analysis_editor.dart';
 
 class CampaignScreen extends StatefulWidget {
-  const CampaignScreen({super.key, this.onOpenMarket});
+  const CampaignScreen({super.key, this.onOpenMarket, this.environment});
   final VoidCallback? onOpenMarket;
+  final Future<EnvironmentRepository>? environment;
   @override
   State<CampaignScreen> createState() => _CampaignScreenState();
 }
 
 class _CampaignScreenState extends State<CampaignScreen> {
-  final environment = EnvironmentRepository.load();
+  late final environment = widget.environment ?? EnvironmentRepository.load();
   final available = TextEditingController(text: '120');
   final water = TextEditingController();
   String? parcelId, previousId;
@@ -27,6 +28,7 @@ class _CampaignScreenState extends State<CampaignScreen> {
   late int month = DateTime.now().month % 12 + 1;
   late int year = DateTime.now().year + (DateTime.now().month == 12 ? 1 : 0);
   bool? irrigation;
+  bool useRegionalClimateReference = false;
   CampaignEvaluation? result;
   List<CampaignEvaluation> alternatives = [];
   List<SequenceEvaluation> sequences = [];
@@ -74,6 +76,7 @@ class _CampaignScreenState extends State<CampaignScreen> {
       availableDays: days,
       irrigationAvailable: irrigation,
       effectiveIrrigationM3Ha: volume,
+      useRegionalClimateReference: useRegionalClimateReference,
     );
     final engine = CampaignEngine(catalog, repository);
     setState(() {
@@ -98,7 +101,7 @@ class _CampaignScreenState extends State<CampaignScreen> {
           : FutureBuilder<EnvironmentRepository>(
               future: environment,
               builder: (context, snapshot) {
-                if (snapshot.hasError)
+                if (snapshot.hasError) {
                   return Center(
                     child: Padding(
                       padding: const EdgeInsets.all(24),
@@ -107,8 +110,10 @@ class _CampaignScreenState extends State<CampaignScreen> {
                       ),
                     ),
                   );
-                if (!snapshot.hasData)
+                }
+                if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
+                }
                 final repository = snapshot.data!;
                 return ListView(
                   padding: const EdgeInsets.all(20),
@@ -150,6 +155,7 @@ class _CampaignScreenState extends State<CampaignScreen> {
                                   : (v) => setState(() {
                                       parcelId = v;
                                       previousId = null;
+                                      useRegionalClimateReference = false;
                                       result = null;
                                     }),
                             ),
@@ -164,7 +170,11 @@ class _CampaignScreenState extends State<CampaignScreen> {
                                         )
                                         .firstOrNull;
                                     if (existing != null) {
-                                      setState(() => parcelId = existing.id);
+                                      setState(() {
+                                        parcelId = existing.id;
+                                        useRegionalClimateReference = false;
+                                        result = null;
+                                      });
                                       return;
                                     }
                                     store.addParcel(
@@ -180,6 +190,7 @@ class _CampaignScreenState extends State<CampaignScreen> {
                                     setState(() {
                                       parcelId = store.parcels.last.id;
                                       previousId = null;
+                                      useRegionalClimateReference = false;
                                       result = null;
                                     });
                                   },
@@ -191,6 +202,26 @@ class _CampaignScreenState extends State<CampaignScreen> {
                             style: TextStyle(fontSize: 11),
                           ),
                           if (parcel != null) ...[
+                            const SizedBox(height: 12),
+                            SwitchListTile.adaptive(
+                              key: const Key('campaign-regional-climate'),
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text(
+                                'Usar referencias históricas de La Joya',
+                              ),
+                              subtitle: const Text(
+                                'Clima NASA POWER 2015–2025 y contexto SMAP. Confirma su pertinencia para tu parcela; no son mediciones de su suelo ni pronósticos.',
+                              ),
+                              value: useRegionalClimateReference,
+                              onChanged: loading
+                                  ? null
+                                  : (value) => setState(() {
+                                      useRegionalClimateReference = value;
+                                      result = null;
+                                      alternatives = [];
+                                      sequences = [];
+                                    }),
+                            ),
                             const SizedBox(height: 12),
                             DropdownButtonFormField<String>(
                               key: ValueKey('campaign-previous-${parcel.id}'),
@@ -363,12 +394,14 @@ class _CampaignScreenState extends State<CampaignScreen> {
                                               initial: parcel.soilAnalysis,
                                             ),
                                           );
-                                      if (edited != null)
+                                      if (edited != null) {
                                         await store.updateParcel(
                                           parcel.copyWith(soilAnalysis: edited),
                                         );
-                                      if (mounted)
+                                      }
+                                      if (mounted) {
                                         setState(() => result = null);
+                                      }
                                     },
                               icon: const Icon(Icons.science_outlined),
                               label: const Text('Revisar análisis del suelo'),
@@ -610,7 +643,7 @@ class CampaignResultCard extends StatelessWidget {
             title: const Text('Datos climáticos y procedencia'),
             children: [
               const Text(
-                'Histórico 2015–2024, mínimo 5 años por mes. No es una normal climática de 30 años ni pronóstico. Media y variabilidad interanual; SMAP pondera cada año por igual. Lluvia en meses completos, sin estimar lluvia efectiva ni estrés radicular.',
+                'Periodo indicado por fuente: POWER 2015–2025; GPM y SMAP 2015–2024 para comparación. Mínimo 5 años por mes. No es una normal climática de 30 años ni pronóstico. Lluvia en meses completos, sin estimar lluvia efectiva ni estrés radicular. POWER y GPM se muestran por separado; no se suman.',
               ),
               for (final c in e.climate)
                 ListTile(
@@ -619,7 +652,7 @@ class CampaignResultCard extends StatelessWidget {
                     'Mes ${c.month} · ${c.source.variable}: ${c.mean.toStringAsFixed(3)} ${c.source.unit}',
                   ),
                   subtitle: Text(
-                    'Rango de medias anuales ${c.minimum.toStringAsFixed(3)}–${c.maximum.toStringAsFixed(3)}; desviación ${c.standardDeviation.toStringAsFixed(3)}\n${c.years} años, ${c.samples} observaciones, ${c.missing} años sin dato; ${c.period}\n${c.source.product}\n${c.source.spatialResolution}\n${c.source.quality}\n${c.source.file} · SHA-256 ${c.source.sha256}',
+                    'Rango interanual del mes ${c.minimum.toStringAsFixed(3)}–${c.maximum.toStringAsFixed(3)}; desviación ${c.standardDeviation.toStringAsFixed(3)}\n${c.years} años, ${c.samples} observaciones, ${c.missing} años sin dato; ${c.period}\n${c.source.product}\n${c.source.spatialResolution}\n${c.source.quality}\n${c.source.file} · SHA-256 ${c.source.sha256}',
                   ),
                 ),
               for (final f in e.forecasts)

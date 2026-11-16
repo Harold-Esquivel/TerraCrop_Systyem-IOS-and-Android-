@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 
 /// Reference knowledge supplied by the user for La Joya, Arequipa.
-/// Classification and validation notes describe the workbook's assertions;
+/// Classification and validation notes describe the source file's assertions;
 /// they are not a claim of independent verification or current local stock.
 class AgronomyCatalog {
   AgronomyCatalog._({
@@ -18,6 +18,9 @@ class AgronomyCatalog {
     required this.notes,
     required this.sequenceNotes,
     required this.rawTables,
+    required this.rawDocument,
+    required this.calendars,
+    required this.criticalThresholds,
   });
 
   static AgronomyCatalog? _current;
@@ -35,7 +38,7 @@ class AgronomyCatalog {
   }
 
   factory AgronomyCatalog.fromJson(Map<String, dynamic> json) {
-    if (json['schemaVersion'] != 1) {
+    if (json['schemaVersion'] != 1 && json['schemaVersion'] != 2) {
       throw const FormatException('Versión de base agronómica no compatible');
     }
     List<T> rows<T>(String key, T Function(Map<String, dynamic>) parse) =>
@@ -66,7 +69,24 @@ class AgronomyCatalog {
           ),
         ),
       ),
+      rawDocument:
+          _freeze(Map<String, dynamic>.from(json['rawDocument'] as Map? ?? {}))
+              as Map<String, dynamic>,
+      calendars: json['calendars'] == null
+          ? const []
+          : rows('calendars', CropCalendar.fromJson),
+      criticalThresholds: json['criticalThresholds'] == null
+          ? const []
+          : rows('criticalThresholds', CriticalThreshold.fromJson),
     );
+    if (json['schemaVersion'] == 2 &&
+        (catalog.calendars.isEmpty ||
+            catalog.criticalThresholds.isEmpty ||
+            catalog.rawDocument['meta'] == null)) {
+      throw const FormatException(
+        'Base JSON sin calendarios, umbrales u original',
+      );
+    }
     catalog._validate();
     return catalog;
   }
@@ -82,6 +102,45 @@ class AgronomyCatalog {
   final List<String> notes;
   final List<String> sequenceNotes;
   final List<Map<String, dynamic>> rawTables;
+  final Map<String, dynamic> rawDocument;
+  final List<CropCalendar> calendars;
+  final List<CriticalThreshold> criticalThresholds;
+
+  // Supplemental tables retain the supplied Spanish fields and all caveats.
+  // Descriptions of future integrations are data, never executable rules.
+  List<Map<String, dynamic>> records(String section) => List.unmodifiable(
+    (rawDocument[section] as List? ?? const []).cast<Map<String, dynamic>>(),
+  );
+  List<Map<String, dynamic>> get localSequences =>
+      records('secuencias_locales');
+  List<Map<String, dynamic>> get microorganismPresentations =>
+      records('microorganismos_presentaciones');
+  List<Map<String, dynamic>> get products => records('productos_disponibles');
+  List<Map<String, dynamic>> get preventiveAlerts =>
+      records('alertas_preventivas');
+  List<Map<String, dynamic>> get warnings => records('advertencias');
+  List<Map<String, dynamic>> get dynamicSources => records('fuentes_dinamicas');
+  List<Map<String, dynamic>> get dataReviews => records('revision_de_datos');
+
+  CropCalendar? calendarFor(String crop) {
+    final id = findCrop(crop)?.id;
+    return calendars.where((r) => r.cropId == id).firstOrNull;
+  }
+
+  CriticalThreshold? thresholdFor(String crop) {
+    final id = findCrop(crop)?.id;
+    return criticalThresholds.where((r) => r.cropId == id).firstOrNull;
+  }
+
+  static dynamic _freeze(dynamic value) {
+    if (value is Map) {
+      return Map<String, dynamic>.unmodifiable(
+        value.map((key, item) => MapEntry(key as String, _freeze(item))),
+      );
+    }
+    if (value is List) return List<dynamic>.unmodifiable(value.map(_freeze));
+    return value;
+  }
 
   CropProfile? findCrop(String nameOrId) {
     final name = normalizeName(nameOrId);
@@ -147,13 +206,13 @@ class AgronomyCatalog {
   }
 
   void _validate() {
-    if (crops.length != 13 ||
-        compatibility.length != 169 ||
-        sequences.length != 3 ||
-        sequenceDetails.length != 12 ||
-        soilRules.length != 13 ||
-        microorganisms.length != 9 ||
-        sources.length != 16) {
+    if (crops.isEmpty ||
+        compatibility.length != crops.length * crops.length ||
+        sequences.isEmpty ||
+        sequenceDetails.isEmpty ||
+        soilRules.isEmpty ||
+        microorganisms.isEmpty ||
+        sources.isEmpty) {
       throw const FormatException('Base agronómica incompleta');
     }
     final ids = crops.map((c) => c.id).toSet();
@@ -171,6 +230,20 @@ class AgronomyCatalog {
       }
     }
     final microIds = microorganisms.map((m) => m.id).toSet();
+    final sequenceIds = sequences.map((s) => s.id).toSet();
+    for (final values in [
+      microorganisms.map((m) => m.id),
+      sequences.map((s) => s.id),
+      soilRules.map((r) => r.id),
+      sources.map((s) => s.id),
+    ]) {
+      if (values.toSet().length != values.length) {
+        throw const FormatException('ID agronómico duplicado');
+      }
+    }
+    if (sequenceDetails.any((s) => !sequenceIds.contains(s.sequenceId))) {
+      throw const FormatException('Secuencia desconocida');
+    }
     for (final rule in soilRules) {
       if (!rule.microorganismIds.every(microIds.contains)) {
         throw const FormatException('Microorganismo desconocido en regla');
@@ -181,11 +254,70 @@ class AgronomyCatalog {
         throw const FormatException('Microorganismo desconocido en secuencia');
       }
       final steps = stepsForSequence(sequence.id);
-      if (steps.length != 4 || steps.any((s) => !ids.contains(s.cropId))) {
+      if (steps.isEmpty ||
+          steps.any((s) => !ids.contains(s.cropId)) ||
+          steps.indexed.any((s) => s.$2.campaign != s.$1 + 1)) {
         throw const FormatException('Secuencia incompleta');
       }
     }
+    for (final table in [
+      calendars.map((r) => r.cropId),
+      criticalThresholds.map((r) => r.cropId),
+    ]) {
+      if (table.isNotEmpty &&
+          (table.length != ids.length ||
+              table.toSet().length != ids.length ||
+              !table.every(ids.contains))) {
+        throw const FormatException('Calendarios o umbrales incompletos');
+      }
+    }
   }
+}
+
+class CropCalendar {
+  CropCalendar.fromJson(Map<String, dynamic> json)
+    : cropId = json['cropId'] as String,
+      sowingMonths = List.unmodifiable(
+        (json['sowingMonths'] as List).cast<int>(),
+      ),
+      harvestMonths = List.unmodifiable(
+        (json['harvestMonths'] as List).cast<int>(),
+      ),
+      sowingLabel = json['sowingLabel'] as String,
+      harvestLabel = json['harvestLabel'] as String,
+      duration = json['duration'] as String,
+      campaigns = json['campaigns'] as String,
+      evidence = json['evidence'] as String,
+      confidence = json['confidence'] as String {
+    for (final months in [sowingMonths, harvestMonths]) {
+      if (months.toSet().length != months.length ||
+          months.any((m) => m < 1 || m > 12)) {
+        throw const FormatException('Mes de calendario inválido');
+      }
+    }
+  }
+  final String cropId,
+      sowingLabel,
+      harvestLabel,
+      duration,
+      campaigns,
+      evidence,
+      confidence;
+  final List<int> sowingMonths, harvestMonths;
+}
+
+class CriticalThreshold {
+  CriticalThreshold.fromJson(Map<String, dynamic> json)
+    : cropId = json['cropId'] as String,
+      low = (json['low'] as num?)?.toDouble(),
+      lethal = (json['lethal'] as num?)?.toDouble(),
+      high = (json['high'] as num?)?.toDouble(),
+      stage = json['stage'] as String,
+      effect = json['effect'] as String,
+      source = json['source'] as String,
+      confidence = json['confidence'] as String;
+  final String cropId, stage, effect, source, confidence;
+  final double? low, lethal, high;
 }
 
 class CropProfile {
@@ -221,6 +353,14 @@ class CropProfile {
     required this.salinityNote,
     required this.observations,
     required this.validation,
+    this.soilContribution = '',
+    this.nitrogenContribution,
+    this.bridgeSuitability = '',
+    this.extractionN,
+    this.extractionP,
+    this.extractionK,
+    this.extractionSource = '',
+    this.localPresence = '',
   });
 
   final String id;
@@ -263,6 +403,11 @@ class CropProfile {
   final String salinityNote;
   final String observations;
   final String validation;
+  final String soilContribution,
+      bridgeSuitability,
+      extractionSource,
+      localPresence;
+  final double? nitrogenContribution, extractionN, extractionP, extractionK;
 
   bool get isConfirmed => classification == 'Confirmada';
   bool get isPotential => classification == 'Potencial';
@@ -301,6 +446,14 @@ class CropProfile {
     salinityNote: json['salinityNote'] as String,
     observations: json['observations'] as String,
     validation: json['validation'] as String,
+    soilContribution: json['soilContribution'] as String? ?? '',
+    nitrogenContribution: (json['nitrogenContribution'] as num?)?.toDouble(),
+    bridgeSuitability: json['bridgeSuitability'] as String? ?? '',
+    extractionN: (json['extractionN'] as num?)?.toDouble(),
+    extractionP: (json['extractionP'] as num?)?.toDouble(),
+    extractionK: (json['extractionK'] as num?)?.toDouble(),
+    extractionSource: json['extractionSource'] as String? ?? '',
+    localPresence: json['localPresence'] as String? ?? '',
   );
 }
 

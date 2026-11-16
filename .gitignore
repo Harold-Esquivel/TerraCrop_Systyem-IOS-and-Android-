@@ -32,8 +32,10 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
+**/node_modules/
 firebase.defines.json
 mapbox.defines.json
+/data/environment/private/
 
 # Symbolication related
 app.*.symbols
